@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hud-bg: #0a0e14;
+  --color-hud-cyan: #00f0ff;
+  --color-hud-violet: #a855f7;
+  --color-hud-red: #ff3344;
+  --color-hud-amber: #ffaa00;
+  --font-hud: 'JetBrains Mono', 'Roboto Mono', 'Courier New', monospace;
+}
+
+:root {
+  font-family: var(--font-hud);
+  background: var(--color-hud-bg);
+  color: var(--color-hud-cyan);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-hud-bg);
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  min-height: 100vh;
+}
+
+/* Scanline overlay */
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: 50;
+}
+
+/* Grid pattern */
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glass card HUD panel */
+.hud-panel {
+  background: rgba(10, 14, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.1), inset 0 0 20px rgba(0, 240, 255, 0.02);
+}
+
+/* Glowing text */
+.glow-text {
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+}
+
+/* Pulse animation */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px currentColor); }
+  50% { filter: drop-shadow(0 0 16px currentColor); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Rep increment flash */
+@keyframes rep-flash {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.15); filter: brightness(1.5); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.rep-flash {
+  animation: rep-flash 0.3s ease-out;
+}
+
+/* Error flash */
+@keyframes error-flash {
+  0%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+.error-flash {
+  animation: error-flash 0.5s ease-in-out 2;
+}
+
+/* Coaching caption fade */
+@keyframes caption-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes caption-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.caption-enter {
+  animation: caption-in 0.3s ease-out forwards;
+}
+
+.caption-exit {
+  animation: caption-out 0.3s ease-in forwards;
+}
+
+/* Corner bracket decoration */
+.corner-bracket {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 240, 255, 0.4);
+}
+
+.corner-bracket.tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.corner-bracket.tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+.corner-bracket.bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+.corner-bracket.br { bottom: -2px; right: -2px; border-left: none; border-top: none; }

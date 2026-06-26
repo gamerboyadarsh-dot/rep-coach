@@ -1,0 +1,342 @@
+// @ts-nocheck
+import { angleBetween, getPoint } from './angles';
+
+export type ExerciseType = 'squat' | 'pushup' | 'jumping_jack';
+
+export type RepState = 'standing' | 'descending' | 'bottom' | 'ascending' | 'out' | 'in';
+export type PushupState = 'up' | 'descending' | 'bottom' | 'ascending';
+
+export interface FormError {
+  type: string;
+  message: string;
+  severity: 'warning' | 'error';
+}
+
+export interface RepResult {
+  repNumber: number;
+  exercise: ExerciseType;
+  goodForm: boolean;
+  errors: string[];
+  bottomAngle?: number;
+  streak: number;
+}
+
+// Squat thresholds
+const SQUAT_DEPTH_ANGLE = 100; // Below this = squat depth
+const SQUAT_STANDING_ANGLE = 160; // Above this = standing
+const SQUAT_MIN_DEPTH = 110; // Anything > this is shallow
+const KNEE_VALGUS_THRESHOLD = 0.08; // Knee x-spread vs ankle x-spread ratio
+
+// Push-up thresholds
+const PUSHUP_EXTENDED_ANGLE = 160;
+const PUSHUP_BENT_ANGLE = 90;
+const PUSHUP_MIN_BEND = 100; // Anything > this is partial
+const HIP_SAG_MAX_DEVIATION = 25; // Max deviation from 180° straight line
+
+// Landmark indices from MediaPipe Pose
+export const LANDMARKS = {
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+  LEFT_WRIST: 15,
+  RIGHT_WRIST: 16,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
+  LEFT_KNEE: 25,
+  RIGHT_KNEE: 26,
+  LEFT_ANKLE: 27,
+  RIGHT_ANKLE: 28,
+};
+
+class ExerciseLogic {
+  private repCount = 0;
+  private currentState: RepState = 'standing';
+  private currentPushupState: PushupState = 'up';
+  private currentErrors: string[] = [];
+  private bottomAngleReached = Infinity;
+  private hasStartedFromStanding = false;
+  private lastBottomAngle = 0;
+
+  // For squat valgus detection at bottom
+  private bottomAnkleSpread = 0;
+  private bottomKneeSpread = 0;
+
+  private repResults: RepResult[] = [];
+  private currentStreak = 0;
+
+  reset() {
+    this.repCount = 0;
+    this.currentState = 'standing';
+    this.currentPushupState = 'up';
+    this.currentErrors = [];
+    this.bottomAngleReached = Infinity;
+    this.hasStartedFromStanding = false;
+    this.lastBottomAngle = 0;
+    this.bottomAnkleSpread = 0;
+    this.bottomKneeSpread = 0;
+    this.repResults = [];
+    this.currentStreak = 0;
+  }
+
+  getResults(): RepResult[] {
+    return [...this.repResults];
+  }
+
+  private addRepResult(exercise: ExerciseType, goodForm: boolean, errors: string[], bottomAngle?: number) {
+    this.repCount++;
+    if (goodForm) {
+      this.currentStreak++;
+    } else {
+      this.currentStreak = 0;
+    }
+    
+    const result: RepResult = {
+      repNumber: this.repCount,
+      exercise,
+      goodForm,
+      errors,
+      bottomAngle,
+      streak: this.currentStreak
+    };
+    this.repResults.push(result);
+    return result;
+  }
+
+  // ==================== SQUAT LOGIC ====================
+  processSquatFrame(landmarks: { x: number; y: number }[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
+    const hip = getPoint(landmarks[LANDMARKS.LEFT_HIP]);
+    const knee = getPoint(landmarks[LANDMARKS.LEFT_KNEE]);
+    const ankle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE]);
+    const rightHip = getPoint(landmarks[LANDMARKS.RIGHT_HIP]);
+    const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE]);
+    const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE]);
+
+    // Use average of both legs
+    const avgHip = { x: (hip.x + rightHip.x) / 2, y: (hip.y + rightHip.y) / 2 };
+    const avgKnee = { x: (knee.x + rightKnee.x) / 2, y: (knee.y + rightKnee.y) / 2 };
+    const avgAnkle = { x: (ankle.x + rightAnkle.x) / 2, y: (ankle.y + rightAnkle.y) / 2 };
+
+    // Calculate hip-knee-ankle angle
+    const angle = angleBetween(avgHip, avgKnee, avgAnkle);
+
+    // State machine with hysteresis
+    const prevState = this.currentState;
+    const errors: string[] = [];
+
+    switch (this.currentState) {
+      case 'standing':
+        if (angle < SQUAT_STANDING_ANGLE - 10) {
+          this.currentState = 'descending';
+          this.hasStartedFromStanding = true;
+          this.bottomAngleReached = Infinity;
+        }
+        break;
+
+      case 'descending':
+        if (angle < SQUAT_DEPTH_ANGLE) {
+          this.currentState = 'bottom';
+          this.bottomAngleReached = angle;
+          this.lastBottomAngle = angle;
+
+          // Check for deep enough at bottom
+          if (angle > SQUAT_MIN_DEPTH) {
+            errors.push('shallow_squat');
+          }
+
+          // Check for knee valgus at bottom
+          const leftAnkle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE]);
+          const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE]);
+          const leftKnee = getPoint(landmarks[LANDMARKS.LEFT_KNEE]);
+          const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE]);
+
+          // X-distance between ankles and knees
+          const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
+          const kneeSpread = Math.abs(rightKnee.x - leftKnee.x);
+
+          this.bottomAnkleSpread = ankleSpread;
+          this.bottomKneeSpread = kneeSpread;
+
+          // Knee valgus: knees closer together than ankles by threshold
+          if (kneeSpread < ankleSpread * 0.8) {
+            errors.push('knees_caving_in');
+          }
+        }
+        break;
+
+      case 'bottom':
+        if (angle > SQUAT_DEPTH_ANGLE + 10) {
+          this.currentState = 'ascending';
+        }
+        break;
+
+      case 'ascending':
+        if (angle > SQUAT_STANDING_ANGLE) {
+          // Rep complete!
+          const goodForm = errors.length === 0;
+          const repResult = this.addRepResult('squat', goodForm, errors, this.lastBottomAngle);
+          this.currentErrors = errors;
+          this.currentState = 'standing';
+          return { state: 'standing', errors, currentRep: repResult };
+        }
+        break;
+    }
+
+    return { state: this.currentState, errors: [...errors] };
+  }
+
+  // ==================== PUSH-UP LOGIC ====================
+  processPushupFrame(landmarks: { x: number; y: number }[], shoulderY: number, isLeftSide?: boolean): { state: PushupState; errors: string[]; currentRep?: RepResult } {
+    const elbowIdx = isLeftSide ? LANDMARKS.LEFT_ELBOW : LANDMARKS.RIGHT_ELBOW;
+    const shoulderIdx = isLeftSide ? LANDMARKS.LEFT_SHOULDER : LANDMARKS.RIGHT_SHOULDER;
+    const wristIdx = isLeftSide ? LANDMARKS.LEFT_WRIST : LANDMARKS.RIGHT_WRIST;
+    const hipIdx = LANDMARKS.LEFT_HIP;
+    const ankleIdx = LANDMARKS.LEFT_ANKLE;
+
+    const elbow = getPoint(landmarks[elbowIdx]);
+    const shoulder = getPoint(landmarks[shoulderIdx]);
+    const wrist = getPoint(landmarks[wristIdx]);
+    const hip = getPoint(landmarks[hipIdx]);
+    const ankle = getPoint(landmarks[ankleIdx]);
+
+    // Elbow angle
+    const elbowAngle = angleBetween(shoulder, elbow, wrist);
+
+    // Hip angle (shoulder-hip-ankle) - check for sagging
+    const hipAngle = angleBetween(shoulder, hip, ankle);
+
+    const errors: string[] = [];
+
+    // Hip sagging detection: straight line should be ~180°, but measured from above can vary
+    // In push-up position, shoulder-hip-ankle should be close to straight
+    // Normal range: 160-180°. Below 160° = sagging
+    if (hipAngle < HIP_SAG_MAX_DEVIATION && hipAngle > 10) {
+      // Convert deviation: 180 minus actual angle
+      if (180 - hipAngle > HIP_SAG_MAX_DEVIATION) {
+        errors.push('hips_sagging');
+      }
+    }
+
+    // State machine
+    switch (this.currentPushupState) {
+      case 'up':
+        if (elbowAngle < PUSHUP_EXTENDED_ANGLE - 5) {
+          this.currentPushupState = 'descending';
+          this.bottomAngleReached = Infinity;
+        }
+        break;
+
+      case 'descending':
+        if (elbowAngle < PUSHUP_BENT_ANGLE) {
+          this.currentPushupState = 'bottom';
+          this.bottomAngleReached = elbowAngle;
+          this.lastBottomAngle = elbowAngle;
+
+          // Check for full range
+          if (elbowAngle > PUSHUP_MIN_BEND) {
+            errors.push('partial_rep');
+          }
+        }
+        break;
+
+      case 'bottom':
+        if (elbowAngle > PUSHUP_BENT_ANGLE + 10) {
+          this.currentPushupState = 'ascending';
+        }
+        break;
+
+      case 'ascending':
+        if (elbowAngle > PUSHUP_EXTENDED_ANGLE) {
+          const goodForm = errors.length === 0;
+          const repResult = this.addRepResult('pushup', goodForm, errors, this.lastBottomAngle);
+          this.currentErrors = errors;
+          this.currentPushupState = 'up';
+          return { state: 'up', errors, currentRep: repResult };
+        }
+        break;
+    }
+
+    return { state: this.currentPushupState, errors: [...errors] };
+  }
+
+  // ==================== JUMPING JACK LOGIC ====================
+  processJumpingJackFrame(landmarks: { x: number; y: number }[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
+    const leftWrist = landmarks[LANDMARKS.LEFT_WRIST];
+    const rightWrist = landmarks[LANDMARKS.RIGHT_WRIST];
+    const leftShoulder = landmarks[LANDMARKS.LEFT_SHOULDER];
+    const rightShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER];
+    const leftAnkle = landmarks[LANDMARKS.LEFT_ANKLE];
+    const rightAnkle = landmarks[LANDMARKS.RIGHT_ANKLE];
+    const leftHip = landmarks[LANDMARKS.LEFT_HIP];
+    const rightHip = landmarks[LANDMARKS.RIGHT_HIP];
+
+    const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
+    const hipSpread = Math.abs(rightHip.x - leftHip.x);
+    
+    // Normalize ankle spread by hip width to handle distance from camera
+    const relativeSpread = ankleSpread / hipSpread;
+
+    const armsUp = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
+    const legsOut = relativeSpread > 1.8; // Ankles significantly wider than hips
+
+    const errors: string[] = [];
+
+    switch (this.currentState) {
+      case 'standing':
+      case 'in':
+        if (armsUp && legsOut) {
+          this.currentState = 'out';
+        } else if (armsUp && !legsOut) {
+          // Warning if they don't jump their legs out
+          if (this.currentState !== 'out') errors.push('lazy_legs');
+        }
+        break;
+
+      case 'out':
+        if (!armsUp && !legsOut) {
+          const goodForm = errors.length === 0;
+          const repResult = this.addRepResult('jumping_jack', goodForm, errors);
+          this.currentState = 'standing';
+          return { state: 'standing', errors, currentRep: repResult };
+        }
+        break;
+    }
+
+    return { state: this.currentState, errors: [...errors] };
+  }
+
+  // ==================== HELPERS ====================
+  getRepCount(): number {
+    return this.repCount;
+  }
+
+  getCurrentErrors(): string[] {
+    return this.currentErrors;
+  }
+
+  getFormScore(): number {
+    if (this.repResults.length === 0) return 100;
+    const goodReps = this.repResults.filter(r => r.goodForm).length;
+    return Math.round((goodReps / this.repResults.length) * 100);
+  }
+
+  getCurrentStreak(): number {
+    let streak = 0;
+    for (let i = this.repResults.length - 1; i >= 0; i--) {
+      if (this.repResults[i].goodForm) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+}
+
+// Singleton instance for the current session
+export const exerciseLogic = new ExerciseLogic();
+
+// Factory for creating fresh instances when needed
+export function createExerciseLogic(): ExerciseLogic {
+  return new ExerciseLogic();
+}

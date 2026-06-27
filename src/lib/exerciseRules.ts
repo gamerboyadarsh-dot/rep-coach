@@ -107,44 +107,41 @@ class ExerciseLogic {
   processSquatFrame(landmarks: { x: number; y: number }[], width: number = 1, height: number = 1): { state: RepState; errors: string[]; currentRep?: RepResult } {
     const hip = getPoint(landmarks[LANDMARKS.LEFT_HIP], width, height);
     const knee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
-    const ankle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE], width, height);
     const rightHip = getPoint(landmarks[LANDMARKS.RIGHT_HIP], width, height);
     const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE], width, height);
-    const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE], width, height);
 
     // Use average of both legs
     const avgHip = { x: (hip.x + rightHip.x) / 2, y: (hip.y + rightHip.y) / 2 };
     const avgKnee = { x: (knee.x + rightKnee.x) / 2, y: (knee.y + rightKnee.y) / 2 };
-    const avgAnkle = { x: (ankle.x + rightAnkle.x) / 2, y: (ankle.y + rightAnkle.y) / 2 };
 
-    // Calculate hip-knee-ankle angle
-    const angle = angleBetween(avgHip, avgKnee, avgAnkle);
+    // Calculate femur angle relative to vertical
+    // 0 = standing straight, 90 = deep squat (femur horizontal)
+    const angle = angleToVertical(avgHip, avgKnee);
+
+    // Femur angle thresholds for squatting
+    const SQUAT_STANDING_THRESHOLD = 30; // degrees from vertical
+    const SQUAT_DEPTH_THRESHOLD = 70; // degrees from vertical (femur almost horizontal)
+    const SQUAT_MIN_DEPTH_THRESHOLD = 60; // minimum required to not be a "shallow" squat
 
     // State machine with hysteresis
-    const prevState = this.currentState;
     const errors: string[] = [];
 
     switch (this.currentState) {
       case 'standing':
-        if (angle < SQUAT_STANDING_ANGLE - 10) {
+        if (angle > SQUAT_STANDING_THRESHOLD + 10) {
           this.currentState = 'descending';
           this.hasStartedFromStanding = true;
-          this.bottomAngleReached = Infinity;
+          this.bottomAngleReached = 0;
         }
         break;
 
       case 'descending':
-        if (angle < SQUAT_DEPTH_ANGLE) {
+        if (angle > SQUAT_DEPTH_THRESHOLD) {
           this.currentState = 'bottom';
           this.bottomAngleReached = angle;
           this.lastBottomAngle = angle;
 
-          // Check for deep enough at bottom
-          if (angle > SQUAT_MIN_DEPTH) {
-            errors.push('shallow_squat');
-          }
-
-          // Check for knee valgus at bottom
+          // Check for knee valgus at bottom (only if ankles are somewhat visible)
           const leftAnkle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE], width, height);
           const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE], width, height);
           const leftKnee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
@@ -158,20 +155,35 @@ class ExerciseLogic {
           this.bottomKneeSpread = kneeSpread;
 
           // Knee valgus: knees closer together than ankles by threshold
-          if (kneeSpread < ankleSpread * 0.8) {
+          // Only check if ankles are reasonably far apart to avoid false positives
+          if (ankleSpread > width * 0.1 && kneeSpread < ankleSpread * 0.8) {
             errors.push('knees_caving_in');
           }
+        } else if (this.currentState === 'descending' && angle < SQUAT_MIN_DEPTH_THRESHOLD && this.hasStartedFromStanding) {
+          // If they start going back up before reaching min depth, it's a shallow squat
+          // We wait until they actually return to standing to register it.
         }
         break;
 
       case 'bottom':
-        if (angle > SQUAT_DEPTH_ANGLE + 10) {
+        // Update max depth reached
+        if (angle > this.bottomAngleReached) {
+          this.bottomAngleReached = angle;
+          this.lastBottomAngle = angle;
+        }
+
+        if (angle < SQUAT_DEPTH_THRESHOLD - 15) {
           this.currentState = 'ascending';
         }
         break;
 
       case 'ascending':
-        if (angle > SQUAT_STANDING_ANGLE) {
+        if (angle < SQUAT_STANDING_THRESHOLD) {
+          // Check if they ever reached minimum depth during the rep
+          if (this.bottomAngleReached < SQUAT_MIN_DEPTH_THRESHOLD) {
+             errors.push('shallow_squat');
+          }
+
           // Rep complete!
           const goodForm = errors.length === 0;
           const repResult = this.addRepResult('squat', goodForm, errors, this.lastBottomAngle);

@@ -5,10 +5,11 @@ import { auth, googleProvider, githubProvider } from '../lib/firebase';
 import { LogIn } from 'lucide-react';
 
 interface Props {
-  onLogin: (username: string, photoURL?: string) => void;
+  onLogin: (uid: string, username: string, photoURL?: string, isGuest?: boolean) => void;
+  isLoading?: boolean;
 }
 
-export function AuthScreen({ onLogin }: Props) {
+export function AuthScreen({ onLogin, isLoading }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +23,7 @@ export function AuthScreen({ onLogin }: Props) {
       setLoading(true);
       sfx.playClick();
       const result = await signInWithPopup(auth, googleProvider);
-      onLogin(result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined);
+      onLogin(result.user.uid, result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined, false);
     } catch (err: any) {
       setError(err.message);
       sfx.playError();
@@ -41,7 +42,7 @@ export function AuthScreen({ onLogin }: Props) {
       setLoading(true);
       sfx.playClick();
       const result = await signInWithPopup(auth, githubProvider);
-      onLogin(result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined);
+      onLogin(result.user.uid, result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined, false);
     } catch (err: any) {
       setError(err.message);
       sfx.playError();
@@ -53,16 +54,24 @@ export function AuthScreen({ onLogin }: Props) {
   // Fallback for hackathon testing without firebase config
   const handleGuestLogin = () => {
     sfx.playClick();
-    onLogin('Guest Athlete');
+    onLogin('guest', 'Guest Athlete', undefined, true);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--color-hud-bg)] text-white relative z-10 font-sans">
+        <div className="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-slate-900 px-6 relative z-10 font-sans">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-12 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--color-hud-bg)] text-slate-200 px-6 relative z-10 font-sans">
+      <div className="w-full max-w-md hud-panel p-8 sm:p-12 relative overflow-hidden">
         
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-50/50"></div>
-        <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-24 h-24 rounded-full bg-orange-50/50"></div>
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-500/10 blur-xl"></div>
+        <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-24 h-24 rounded-full bg-purple-500/10 blur-xl"></div>
 
         <div className="relative z-10 text-center mb-10">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
@@ -71,8 +80,8 @@ export function AuthScreen({ onLogin }: Props) {
               <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-4.24 4.24a3 3 0 1 0 4.24 4.24l2.36-2.36"/>
             </svg>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Rep Coach</h1>
-          <p className="text-slate-500 mt-2 font-medium">Your AI Personal Trainer</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">Rep Coach</h1>
+          <p className="text-slate-400 mt-2 font-medium">Your AI Personal Trainer</p>
         </div>
 
         {error && (
@@ -86,7 +95,7 @@ export function AuthScreen({ onLogin }: Props) {
           <button 
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full bg-white border border-slate-200 text-slate-700 py-3.5 px-4 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full bg-white text-slate-900 py-3.5 px-4 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -110,17 +119,17 @@ export function AuthScreen({ onLogin }: Props) {
           
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t border-slate-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500 font-medium">Or</span>
+              <span className="px-2 bg-[var(--color-hud-bg)] text-slate-500 font-medium">Or</span>
             </div>
           </div>
 
           <button 
             onClick={handleGuestLogin}
             disabled={loading}
-            className="w-full bg-slate-100 text-slate-700 py-3.5 px-4 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-slate-200 transition-all active:scale-[0.98]"
+            className="w-full bg-slate-800 text-slate-300 py-3.5 px-4 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-slate-700 transition-all active:scale-[0.98]"
           >
             <LogIn className="w-5 h-5 opacity-70" />
             Continue as Guest

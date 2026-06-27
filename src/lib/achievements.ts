@@ -1,9 +1,27 @@
+import { fetchUserStats, saveUserStats } from './firestore';
+
 export interface Badge {
   id: string;
   title: string;
   description: string;
   icon: string; // Emoji or SVG path
   unlockedAt?: number;
+}
+
+export interface WorkoutSession {
+  id: string;
+  date: number;
+  exercise: string;
+  reps: number;
+  formScore: number;
+  calories: number;
+  durationSeconds: number;
+}
+
+export interface PersonalRecords {
+  squat: number;
+  pushup: number;
+  jumping_jack: number;
 }
 
 export interface UserStats {
@@ -13,53 +31,113 @@ export interface UserStats {
   currentDailyStreak: number;
   lastWorkoutDate: number | null;
   badges: Record<string, Badge>;
+  workoutHistory: WorkoutSession[];
+  personalRecords: PersonalRecords;
 }
 
-const defaultBadges: Record<string, Badge> = {
+export const defaultBadges: Record<string, Badge> = {
   first_workout: { id: 'first_workout', title: 'First Steps', description: 'Completed your first workout.', icon: '🎯' },
   century_club: { id: 'century_club', title: 'Century Club', description: 'Reached 100 total reps.', icon: '💯' },
   perfect_form: { id: 'perfect_form', title: 'Flawless Execution', description: 'Finished a workout with 100% form score.', icon: '✨' },
   streak_3: { id: 'streak_3', title: 'On Fire', description: 'Reached a 3-day workout streak.', icon: '🔥' },
 };
 
-export function loadStats(username: string): UserStats {
+function getLocalStats(userId: string): UserStats | null {
   try {
-    const data = localStorage.getItem(`repCoachStats_v2_${username}`);
+    const data = localStorage.getItem(`repCoachStats_v4_${userId}`);
     if (data) {
       const parsed = JSON.parse(data);
-      // Ensure default badges exist even if missing from storage
       return {
         ...parsed,
-        badges: { ...defaultBadges, ...parsed.badges }
+        badges: { ...defaultBadges, ...parsed.badges },
+        workoutHistory: parsed.workoutHistory || [],
+        personalRecords: parsed.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 }
       };
     }
   } catch (e) {
-    console.error('Failed to load stats', e);
+    console.error('Failed to load local stats', e);
   }
-  return {
+  return null;
+}
+
+function saveLocalStats(userId: string, stats: UserStats) {
+  try {
+    localStorage.setItem(`repCoachStats_v4_${userId}`, JSON.stringify(stats));
+  } catch (e) {
+    console.error('Failed to save local stats', e);
+  }
+}
+
+export async function loadStats(userId: string, isGuest: boolean): Promise<UserStats> {
+  const defaultStats = {
     totalReps: 0,
     totalWorkouts: 0,
     highestStreak: 0,
     currentDailyStreak: 0,
     lastWorkoutDate: null,
-    badges: { ...defaultBadges }
+    badges: { ...defaultBadges },
+    workoutHistory: [],
+    personalRecords: { squat: 0, pushup: 0, jumping_jack: 0 }
   };
-}
 
-export function saveStats(username: string, stats: UserStats) {
-  try {
-    localStorage.setItem(`repCoachStats_v2_${username}`, JSON.stringify(stats));
-  } catch (e) {
-    console.error('Failed to save stats', e);
+  if (isGuest) {
+    return getLocalStats(userId) || defaultStats;
+  } else {
+    const remoteStats = await fetchUserStats(userId);
+    if (remoteStats) {
+      return {
+        ...remoteStats,
+        badges: { ...defaultBadges, ...(remoteStats.badges || {}) },
+        workoutHistory: remoteStats.workoutHistory || [],
+        personalRecords: remoteStats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 }
+      };
+    }
+    return getLocalStats(userId) || defaultStats;
   }
 }
 
-export function processWorkout(username: string, reps: number, formScore: number): Badge[] {
-  const stats = loadStats(username);
+export async function saveStats(userId: string, stats: UserStats, isGuest: boolean) {
+  saveLocalStats(userId, stats); // Always keep a local copy
+  if (!isGuest) {
+    await saveUserStats(userId, stats);
+  }
+}
+
+export async function processWorkout(
+  userId: string, 
+  isGuest: boolean, 
+  reps: number, 
+  formScore: number,
+  exercise: string,
+  durationSeconds: number
+): Promise<Badge[]> {
+  const stats = await loadStats(userId, isGuest);
   const newlyUnlocked: Badge[] = [];
   const now = Date.now();
 
   if (reps === 0) return []; // Don't process empty workouts
+
+  // Approximate calories (e.g. 0.3 cals per squat/pushup, 0.2 for jumping jacks, roughly depending on form/duration)
+  let calMultiplier = exercise === 'jumping_jack' ? 0.2 : 0.4;
+  const calories = Math.round(reps * calMultiplier);
+
+  const session: WorkoutSession = {
+    id: `ws_${now}`,
+    date: now,
+    exercise,
+    reps,
+    formScore,
+    calories,
+    durationSeconds
+  };
+
+  // Add to history and sort (keep last 50)
+  stats.workoutHistory = [session, ...stats.workoutHistory].slice(0, 50);
+
+  // Update PRs
+  if (reps > (stats.personalRecords[exercise as keyof PersonalRecords] || 0)) {
+    stats.personalRecords[exercise as keyof PersonalRecords] = reps;
+  }
 
   // Update totals
   stats.totalReps += reps;
@@ -104,6 +182,6 @@ export function processWorkout(username: string, reps: number, formScore: number
     unlock('streak_3');
   }
 
-  saveStats(username, stats);
+  await saveStats(userId, stats, isGuest);
   return newlyUnlocked;
 }

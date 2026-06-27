@@ -2,77 +2,247 @@ import { useEffect, useState } from 'react';
 import { sfx } from '../lib/sounds';
 import { loadStats, type UserStats } from '../lib/achievements';
 import { motion } from 'framer-motion';
+import { Trophy, Activity, Flame, LogOut, Award, Star, Medal, Settings, Video, Moon, Bell, History } from 'lucide-react';
 
 interface Props {
+  userId: string;
+  isGuest: boolean;
   username: string;
+  photoURL?: string | null;
   onLogout: () => void;
 }
 
-export function UserProfile({ username, onLogout }: Props) {
+export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: Props) {
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
 
   useEffect(() => {
-    setStats(loadStats(username));
-  }, [username]);
+    async function fetchStats() {
+      setIsLoading(true);
+      try {
+        const data = await loadStats(userId, isGuest);
+        setStats(data);
+      } catch (err) {
+        console.error('Failed to load stats', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchStats();
 
-  const getRank = (reps: number) => {
-    if (reps > 1000) return 'CYBER-NINJA';
-    if (reps > 500) return 'ELITE OPERATIVE';
-    if (reps > 100) return 'VANGUARD';
-    if (reps > 50) return 'GRUNT';
-    return 'ROOKIE';
+    // Fetch cameras
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then(devices => {
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        setCameras(videoDevices);
+        const saved = localStorage.getItem('repCoach_camera_deviceId');
+        if (saved && videoDevices.find(d => d.deviceId === saved)) {
+          setSelectedCamera(saved);
+        } else if (videoDevices.length > 0) {
+          setSelectedCamera(videoDevices[0].deviceId);
+        }
+      });
+    }
+  }, [userId, isGuest]);
+
+  const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedCamera(id);
+    localStorage.setItem('repCoach_camera_deviceId', id);
   };
 
-  if (!stats) return null;
+  const getRank = (reps: number) => {
+    if (reps > 1000) return { title: 'Elite Athlete', icon: <Star className="w-5 h-5 text-yellow-400" /> };
+    if (reps > 500) return { title: 'Advanced', icon: <Award className="w-5 h-5 text-purple-400" /> };
+    if (reps > 100) return { title: 'Intermediate', icon: <Trophy className="w-5 h-5 text-blue-400" /> };
+    if (reps > 50) return { title: 'Beginner', icon: <Medal className="w-5 h-5 text-green-400" /> };
+    return { title: 'Rookie', icon: <Activity className="w-5 h-5 text-slate-400" /> };
+  };
 
-  const badgesList = Object.values(stats.badges);
+  if (isLoading || !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen pt-24 pb-12">
+        <div className="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const badgesList = Object.values(stats.badges || {});
+  const currentRank = getRank(stats.totalReps);
+  const workoutHistory = stats.workoutHistory || [];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 relative z-10 overflow-y-auto pt-24">
-      <div className="hud-panel p-6 md:p-12 w-full max-w-4xl relative">
-        <div className="corner-bracket tl"></div>
-        <div className="corner-bracket tr"></div>
-        <div className="corner-bracket bl"></div>
-        <div className="corner-bracket br"></div>
+    <div className="flex flex-col items-center justify-center min-h-screen pt-24 pb-12 px-6 relative z-10 overflow-y-auto w-full">
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-8 md:p-12 w-full max-w-5xl rounded-3xl shadow-2xl relative">
+        
+        <div className="flex flex-col md:flex-row items-center gap-8 mb-12 border-b border-slate-800 pb-10">
+          <div className="relative">
+            {photoURL ? (
+              <img src={photoURL} alt={username} className="w-32 h-32 rounded-full border-4 border-slate-800 shadow-[0_0_30px_rgba(59,130,246,0.3)] object-cover" />
+            ) : (
+              <div className="w-32 h-32 rounded-full border-4 border-slate-800 bg-slate-800 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)]">
+                <span className="text-4xl font-bold text-slate-400">{username.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+            <div className="absolute -bottom-2 -right-2 bg-slate-800 p-2 rounded-full border border-slate-700 shadow-lg">
+              {currentRank.icon}
+            </div>
+          </div>
 
-        <h1 className="text-4xl font-bold mb-2 text-center glow-text uppercase">OPERATIVE: {username}</h1>
-        <p className="text-center text-[var(--color-hud-violet)] mb-8 uppercase tracking-widest text-sm font-bold">
-          RANK: {getRank(stats.totalReps)}
-        </p>
+          <div className="text-center md:text-left flex-1">
+            <h1 className="text-4xl font-black mb-2 text-white">{username}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-2">
+              <span className="text-blue-400 font-bold uppercase tracking-widest text-sm">{currentRank.title}</span>
+              {isGuest && <span className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded uppercase font-semibold">Guest Mode</span>}
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => { sfx.playClick(); onLogout(); }}
+            className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-red-400 py-3 px-6 rounded-xl font-bold transition-all shadow-lg active:scale-95"
+          >
+            <LogOut className="w-5 h-5" /> Sign Out
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6 text-center relative overflow-hidden">
-            <div className="scanlines"></div>
-            <div className="text-sm opacity-70 uppercase tracking-widest mb-2">CAREER REPS</div>
-            <div className="text-5xl font-bold glow-text">{stats.totalReps}</div>
+          <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 p-8 rounded-2xl text-center shadow-xl">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-3 flex items-center justify-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400" /> Career Reps
+            </div>
+            <div className="text-5xl font-black text-white">{stats.totalReps}</div>
           </motion.div>
           
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6 text-center relative overflow-hidden">
-            <div className="scanlines"></div>
-            <div className="text-sm opacity-70 uppercase tracking-widest mb-2">BEST STREAK</div>
-            <div className="text-5xl font-bold text-[var(--color-hud-amber)] glow-text">{stats.highestStreak}</div>
+          <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 p-8 rounded-2xl text-center shadow-xl">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-3 flex items-center justify-center gap-2">
+              <Trophy className="w-4 h-4 text-purple-400" /> Best Streak
+            </div>
+            <div className="text-5xl font-black text-white">{stats.highestStreak}</div>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6 text-center relative overflow-hidden">
-            <div className="scanlines"></div>
-            <div className="text-sm opacity-70 uppercase tracking-widest mb-2">CURRENT DAILY STREAK</div>
-            <div className="text-5xl font-bold text-[#ff4b4b] glow-text">{stats.currentDailyStreak} 🔥</div>
+          <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 p-8 rounded-2xl text-center shadow-xl relative overflow-hidden">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-3 flex items-center justify-center gap-2">
+               Daily Streak
+            </div>
+            <div className="text-5xl font-black text-orange-400 flex items-center justify-center gap-2">
+              {stats.currentDailyStreak} <Flame className="w-8 h-8 text-orange-500" />
+            </div>
           </motion.div>
         </div>
 
+        {/* 2-Column Layout for History and Settings */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+          
+          {/* History */}
+          <div>
+            <h2 className="text-xl font-bold mb-6 text-white tracking-wide border-b border-slate-800 pb-4 flex items-center gap-3">
+              <History className="w-6 h-6 text-blue-500" /> Workout History
+            </h2>
+            <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2">
+              {workoutHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 border border-dashed border-slate-700 rounded-2xl bg-slate-800/20">
+                  <Activity className="w-12 h-12 text-slate-600 mb-4" />
+                  <p className="text-slate-400 font-medium text-center">No workout history yet.<br/>Your journey begins today.</p>
+                </div>
+              ) : (
+                workoutHistory.map(session => (
+                  <div key={session.id} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 flex justify-between items-center hover:bg-slate-700/40 transition-colors">
+                    <div>
+                      <h4 className="text-white font-bold capitalize">{session.exercise.replace('_', ' ')}</h4>
+                      <p className="text-xs text-slate-400">{new Date(session.date).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-white">{session.reps} <span className="text-xs text-slate-500 font-normal">reps</span></div>
+                      <div className={`text-xs font-bold ${session.formScore >= 80 ? 'text-blue-400' : 'text-orange-400'}`}>{session.formScore}% form</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div>
+            <h2 className="text-xl font-bold mb-6 text-white tracking-wide border-b border-slate-800 pb-4 flex items-center gap-3">
+              <Settings className="w-6 h-6 text-slate-400" /> Settings
+            </h2>
+            <div className="flex flex-col gap-4">
+              
+              {/* Camera Picker */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Video className="w-5 h-5 text-blue-400" />
+                  <div>
+                    <h4 className="text-white font-bold">Default Camera</h4>
+                    <p className="text-xs text-slate-400">Select which camera to use</p>
+                  </div>
+                </div>
+                <select 
+                  value={selectedCamera}
+                  onChange={handleCameraChange}
+                  className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                >
+                  {cameras.length === 0 ? (
+                    <option value="">No cameras found</option>
+                  ) : (
+                    cameras.map((c, i) => (
+                      <option key={c.deviceId} value={c.deviceId}>
+                        {c.label || `Camera ${i + 1}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Theme Toggle Placeholder */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Moon className="w-5 h-5 text-purple-400" />
+                  <div>
+                    <h4 className="text-white font-bold">Theme Mode</h4>
+                    <p className="text-xs text-slate-400">Dark mode is currently locked</p>
+                  </div>
+                </div>
+                <div className="bg-slate-900 rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-not-allowed opacity-50">
+                  <div className="bg-blue-500 w-4 h-4 rounded-full translate-x-6"></div>
+                </div>
+              </div>
+
+              {/* Notifications Toggle Placeholder */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <h4 className="text-white font-bold">Notifications</h4>
+                    <p className="text-xs text-slate-400">Streak reminders</p>
+                  </div>
+                </div>
+                <div className="bg-slate-900 rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-pointer">
+                  <div className="bg-slate-600 w-4 h-4 rounded-full"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
         {/* Trophy Room */}
-        <div className="mb-12">
-          <h2 className="text-xl font-bold mb-6 text-[var(--color-hud-amber)] tracking-widest border-b border-[var(--color-hud-amber)]/30 pb-2">TROPHY ROOM</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <h2 className="text-xl font-bold mb-6 text-white tracking-wide border-b border-slate-800 pb-4 flex items-center gap-3">
+            <Trophy className="w-6 h-6 text-yellow-500" /> Trophy Room
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {badgesList.map(badge => {
               const isUnlocked = !!badge.unlockedAt;
               return (
-                <div key={badge.id} className={`p-4 border ${isUnlocked ? 'border-[var(--color-hud-amber)] bg-[var(--color-hud-amber)]/10' : 'border-gray-700 bg-gray-900/50'} text-center transition-all`}>
-                  <div className={`text-4xl mb-2 ${!isUnlocked ? 'opacity-20 grayscale' : 'animate-pulse'}`}>{badge.icon}</div>
-                  <div className={`font-bold text-sm mb-1 ${isUnlocked ? 'text-[var(--color-hud-amber)]' : 'text-gray-500'}`}>{badge.title}</div>
-                  <div className={`text-xs ${isUnlocked ? 'opacity-80' : 'opacity-40'}`}>{badge.description}</div>
+                <div key={badge.id} className={`p-6 rounded-2xl border transition-all duration-300 ${isUnlocked ? 'border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 shadow-[0_0_20px_rgba(234,179,8,0.1)] hover:scale-105' : 'border-slate-800 bg-slate-900/50'}`}>
+                  <div className={`text-5xl mb-4 text-center ${!isUnlocked ? 'opacity-20 grayscale' : 'drop-shadow-lg'}`}>{badge.icon}</div>
+                  <div className={`font-bold text-lg mb-1 text-center ${isUnlocked ? 'text-yellow-500' : 'text-slate-500'}`}>{badge.title}</div>
+                  <div className={`text-sm text-center ${isUnlocked ? 'text-slate-300' : 'text-slate-600'}`}>{badge.description}</div>
                   {isUnlocked && (
-                    <div className="text-[10px] opacity-50 mt-2">
+                    <div className="text-xs text-center text-slate-500 mt-4 font-medium uppercase tracking-wider bg-slate-900/50 py-1 rounded-lg">
                       {new Date(badge.unlockedAt!).toLocaleDateString()}
                     </div>
                   )}
@@ -82,14 +252,12 @@ export function UserProfile({ username, onLogout }: Props) {
           </div>
         </div>
 
-        <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+        <button 
           onClick={() => { sfx.playClick(); onLogout(); }}
-          className="w-full bg-[var(--color-hud-red)]/10 border border-[var(--color-hud-red)] text-[var(--color-hud-red)] py-4 font-bold tracking-widest hover:bg-[var(--color-hud-red)] hover:text-white transition-colors cursor-pointer uppercase"
+          className="md:hidden w-full mt-10 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-red-400 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95"
         >
-          TERMINATE UPLINK (LOGOUT)
-        </motion.button>
+          <LogOut className="w-5 h-5" /> Sign Out
+        </button>
       </div>
     </div>
   );

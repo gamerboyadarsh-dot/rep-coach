@@ -1,16 +1,9 @@
-// @ts-nocheck
-import { angleBetween, getPoint } from './angles';
+import { angleBetween, angleToVertical, getPoint } from './angles';
 
 export type ExerciseType = 'squat' | 'pushup' | 'jumping_jack';
 
 export type RepState = 'standing' | 'descending' | 'bottom' | 'ascending' | 'out' | 'in';
 export type PushupState = 'up' | 'descending' | 'bottom' | 'ascending';
-
-export interface FormError {
-  type: string;
-  message: string;
-  severity: 'warning' | 'error';
-}
 
 export interface RepResult {
   repNumber: number;
@@ -20,18 +13,6 @@ export interface RepResult {
   bottomAngle?: number;
   streak: number;
 }
-
-// Squat thresholds
-const SQUAT_DEPTH_ANGLE = 120; // Relaxed from 100 for easier mobile detection
-const SQUAT_STANDING_ANGLE = 150; // Relaxed from 160
-const SQUAT_MIN_DEPTH = 130; 
-const KNEE_VALGUS_THRESHOLD = 0.08; 
-
-// Push-up thresholds
-const PUSHUP_EXTENDED_ANGLE = 145; // Relaxed from 160
-const PUSHUP_BENT_ANGLE = 110; // Relaxed from 90
-const PUSHUP_MIN_BEND = 125; 
-const HIP_SAG_MAX_DEVIATION = 35; // Relaxed from 25
 
 // Landmark indices from MediaPipe Pose
 export const LANDMARKS = {
@@ -49,38 +30,50 @@ export const LANDMARKS = {
   RIGHT_ANKLE: 28,
 };
 
+export type Landmark = { x: number; y: number; visibility?: number };
+
+// Minimum visibility confidence to trust a landmark
+const MIN_VISIBILITY = 0.5;
+
+// EMA smoothing factor (higher = more reactive, lower = smoother)
+const EMA_ALPHA = 0.35;
+
 class ExerciseLogic {
   private repCount = 0;
   private currentState: RepState = 'standing';
   private currentPushupState: PushupState = 'up';
   private currentErrors: string[] = [];
-  private bottomAngleReached = Infinity;
-  private hasStartedFromStanding = false;
+  private bottomAngleReached = 0;
   private lastBottomAngle = 0;
-
-  // For squat valgus detection at bottom
-  private bottomAnkleSpread = 0;
-  private bottomKneeSpread = 0;
-
   private repResults: RepResult[] = [];
   private currentStreak = 0;
+
+  // EMA state for angle smoothing
+  private smoothedSquatAngle: number | null = null;
+  private smoothedLeftElbowAngle: number | null = null;
+  private smoothedRightElbowAngle: number | null = null;
 
   reset() {
     this.repCount = 0;
     this.currentState = 'standing';
     this.currentPushupState = 'up';
     this.currentErrors = [];
-    this.bottomAngleReached = Infinity;
-    this.hasStartedFromStanding = false;
+    this.bottomAngleReached = 0;
     this.lastBottomAngle = 0;
-    this.bottomAnkleSpread = 0;
-    this.bottomKneeSpread = 0;
     this.repResults = [];
     this.currentStreak = 0;
+    this.smoothedSquatAngle = null;
+    this.smoothedLeftElbowAngle = null;
+    this.smoothedRightElbowAngle = null;
   }
 
   getResults(): RepResult[] {
     return [...this.repResults];
+  }
+
+  private smooth(prev: number | null, next: number): number {
+    if (prev === null) return next;
+    return prev * (1 - EMA_ALPHA) + next * EMA_ALPHA;
   }
 
   private addRepResult(exercise: ExerciseType, goodForm: boolean, errors: string[], bottomAngle?: number) {
@@ -90,101 +83,102 @@ class ExerciseLogic {
     } else {
       this.currentStreak = 0;
     }
-    
     const result: RepResult = {
       repNumber: this.repCount,
       exercise,
       goodForm,
       errors,
       bottomAngle,
-      streak: this.currentStreak
+      streak: this.currentStreak,
     };
     this.repResults.push(result);
     return result;
   }
 
   // ==================== SQUAT LOGIC ====================
-  processSquatFrame(landmarks: { x: number; y: number }[], width: number = 1, height: number = 1): { state: RepState; errors: string[]; currentRep?: RepResult } {
-    const hip = getPoint(landmarks[LANDMARKS.LEFT_HIP], width, height);
-    const knee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
-    const rightHip = getPoint(landmarks[LANDMARKS.RIGHT_HIP], width, height);
-    const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE], width, height);
+  // Uses femur vertical angle: 0° = standing, 90° = deep squat (femur horizontal)
+  processSquatFrame(landmarks: Landmark[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
+    const leftHip = landmarks[LANDMARKS.LEFT_HIP];
+    const rightHip = landmarks[LANDMARKS.RIGHT_HIP];
+    const leftKnee = landmarks[LANDMARKS.LEFT_KNEE];
+    const rightKnee = landmarks[LANDMARKS.RIGHT_KNEE];
+    const leftAnkle = landmarks[LANDMARKS.LEFT_ANKLE];
+    const rightAnkle = landmarks[LANDMARKS.RIGHT_ANKLE];
 
-    // Use average of both legs
-    const avgHip = { x: (hip.x + rightHip.x) / 2, y: (hip.y + rightHip.y) / 2 };
-    const avgKnee = { x: (knee.x + rightKnee.x) / 2, y: (knee.y + rightKnee.y) / 2 };
+    // Check core landmark visibility — skip frame if hips/knees not confidently tracked
+    const leftConfident = (leftHip?.visibility ?? 1) > MIN_VISIBILITY && (leftKnee?.visibility ?? 1) > MIN_VISIBILITY;
+    const rightConfident = (rightHip?.visibility ?? 1) > MIN_VISIBILITY && (rightKnee?.visibility ?? 1) > MIN_VISIBILITY;
+    if (!leftConfident && !rightConfident) {
+      return { state: this.currentState, errors: [] };
+    }
 
-    // Calculate femur angle relative to vertical
-    // 0 = standing straight, 90 = deep squat (femur horizontal)
-    const angle = angleToVertical(avgHip, avgKnee);
+    // Use whichever side has better visibility, or average both
+    let rawAngle: number;
+    if (leftConfident && rightConfident) {
+      const leftAngle = angleToVertical(getPoint(leftHip), getPoint(leftKnee));
+      const rightAngle = angleToVertical(getPoint(rightHip), getPoint(rightKnee));
+      rawAngle = (leftAngle + rightAngle) / 2;
+    } else if (leftConfident) {
+      rawAngle = angleToVertical(getPoint(leftHip), getPoint(leftKnee));
+    } else {
+      rawAngle = angleToVertical(getPoint(rightHip), getPoint(rightKnee));
+    }
 
-    // Femur angle thresholds for squatting
-    const SQUAT_STANDING_THRESHOLD = 30; // degrees from vertical
-    const SQUAT_DEPTH_THRESHOLD = 70; // degrees from vertical (femur almost horizontal)
-    const SQUAT_MIN_DEPTH_THRESHOLD = 60; // minimum required to not be a "shallow" squat
+    // Apply EMA smoothing
+    this.smoothedSquatAngle = this.smooth(this.smoothedSquatAngle, rawAngle);
+    const angle = this.smoothedSquatAngle;
 
-    // State machine with hysteresis
+    // Thresholds (degrees from vertical)
+    const STANDING_THRESHOLD = 30;
+    const DEPTH_THRESHOLD = 60;  // femur ≥60° from vertical = deep enough
+    const MIN_DEPTH_THRESHOLD = 50; // minimum to not be "shallow"
+
     const errors: string[] = [];
 
     switch (this.currentState) {
       case 'standing':
-        if (angle > SQUAT_STANDING_THRESHOLD + 10) {
+        if (angle > STANDING_THRESHOLD + 8) {
           this.currentState = 'descending';
-          this.hasStartedFromStanding = true;
           this.bottomAngleReached = 0;
         }
         break;
 
       case 'descending':
-        if (angle > SQUAT_DEPTH_THRESHOLD) {
-          this.currentState = 'bottom';
-          this.bottomAngleReached = angle;
-          this.lastBottomAngle = angle;
-
-          // Check for knee valgus at bottom (only if ankles are somewhat visible)
-          const leftAnkle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE], width, height);
-          const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE], width, height);
-          const leftKnee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
-          const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE], width, height);
-
-          // X-distance between ankles and knees
-          const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
-          const kneeSpread = Math.abs(rightKnee.x - leftKnee.x);
-
-          this.bottomAnkleSpread = ankleSpread;
-          this.bottomKneeSpread = kneeSpread;
-
-          // Knee valgus: knees closer together than ankles by threshold
-          // Only check if ankles are reasonably far apart to avoid false positives
-          if (ankleSpread > width * 0.1 && kneeSpread < ankleSpread * 0.8) {
-            errors.push('knees_caving_in');
-          }
-        } else if (this.currentState === 'descending' && angle < SQUAT_MIN_DEPTH_THRESHOLD && this.hasStartedFromStanding) {
-          // If they start going back up before reaching min depth, it's a shallow squat
-          // We wait until they actually return to standing to register it.
-        }
-        break;
-
-      case 'bottom':
-        // Update max depth reached
         if (angle > this.bottomAngleReached) {
           this.bottomAngleReached = angle;
           this.lastBottomAngle = angle;
         }
+        if (angle > DEPTH_THRESHOLD) {
+          this.currentState = 'bottom';
 
-        if (angle < SQUAT_DEPTH_THRESHOLD - 15) {
+          // Check knee valgus if ankles are visible
+          const leftAnkleVis = (leftAnkle?.visibility ?? 0) > MIN_VISIBILITY;
+          const rightAnkleVis = (rightAnkle?.visibility ?? 0) > MIN_VISIBILITY;
+          if (leftAnkleVis && rightAnkleVis) {
+            const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
+            const kneeSpread = Math.abs((rightKnee?.x ?? 0) - (leftKnee?.x ?? 0));
+            if (ankleSpread > 0.05 && kneeSpread < ankleSpread * 0.8) {
+              errors.push('knees_caving_in');
+            }
+          }
+        }
+        break;
+
+      case 'bottom':
+        if (angle > this.bottomAngleReached) {
+          this.bottomAngleReached = angle;
+          this.lastBottomAngle = angle;
+        }
+        if (angle < DEPTH_THRESHOLD - 12) {
           this.currentState = 'ascending';
         }
         break;
 
       case 'ascending':
-        if (angle < SQUAT_STANDING_THRESHOLD) {
-          // Check if they ever reached minimum depth during the rep
-          if (this.bottomAngleReached < SQUAT_MIN_DEPTH_THRESHOLD) {
-             errors.push('shallow_squat');
+        if (angle < STANDING_THRESHOLD) {
+          if (this.bottomAngleReached < MIN_DEPTH_THRESHOLD) {
+            errors.push('shallow_squat');
           }
-
-          // Rep complete!
           const goodForm = errors.length === 0;
           const repResult = this.addRepResult('squat', goodForm, errors, this.lastBottomAngle);
           this.currentErrors = errors;
@@ -198,67 +192,90 @@ class ExerciseLogic {
   }
 
   // ==================== PUSH-UP LOGIC ====================
-  processPushupFrame(landmarks: { x: number; y: number }[], shoulderY: number, isLeftSide?: boolean, width: number = 1, height: number = 1): { state: PushupState; errors: string[]; currentRep?: RepResult } {
-    const elbowIdx = isLeftSide ? LANDMARKS.LEFT_ELBOW : LANDMARKS.RIGHT_ELBOW;
-    const shoulderIdx = isLeftSide ? LANDMARKS.LEFT_SHOULDER : LANDMARKS.RIGHT_SHOULDER;
-    const wristIdx = isLeftSide ? LANDMARKS.LEFT_WRIST : LANDMARKS.RIGHT_WRIST;
-    const hipIdx = LANDMARKS.LEFT_HIP;
-    const ankleIdx = LANDMARKS.LEFT_ANKLE;
+  // Bilateral: auto-picks the side with better visibility, or averages both
+  processPushupFrame(landmarks: Landmark[]): { state: PushupState; errors: string[]; currentRep?: RepResult } {
+    const leftShoulder = landmarks[LANDMARKS.LEFT_SHOULDER];
+    const rightShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER];
+    const leftElbow = landmarks[LANDMARKS.LEFT_ELBOW];
+    const rightElbow = landmarks[LANDMARKS.RIGHT_ELBOW];
+    const leftWrist = landmarks[LANDMARKS.LEFT_WRIST];
+    const rightWrist = landmarks[LANDMARKS.RIGHT_WRIST];
 
-    const elbow = getPoint(landmarks[elbowIdx], width, height);
-    const shoulder = getPoint(landmarks[shoulderIdx], width, height);
-    const wrist = getPoint(landmarks[wristIdx], width, height);
-    const hip = getPoint(landmarks[hipIdx], width, height);
-    const ankle = getPoint(landmarks[ankleIdx], width, height);
+    const leftChainVis =
+      Math.min(leftShoulder?.visibility ?? 0, leftElbow?.visibility ?? 0, leftWrist?.visibility ?? 0);
+    const rightChainVis =
+      Math.min(rightShoulder?.visibility ?? 0, rightElbow?.visibility ?? 0, rightWrist?.visibility ?? 0);
 
-    // Elbow angle
-    const elbowAngle = angleBetween(shoulder, elbow, wrist);
+    const useLeft = leftChainVis > MIN_VISIBILITY;
+    const useRight = rightChainVis > MIN_VISIBILITY;
 
-    // Hip angle (shoulder-hip-ankle) - check for sagging
-    const hipAngle = angleBetween(shoulder, hip, ankle);
+    if (!useLeft && !useRight) {
+      return { state: this.currentPushupState, errors: [] };
+    }
+
+    let rawElbowAngle: number;
+    if (useLeft && useRight) {
+      const leftAngle = angleBetween(getPoint(leftShoulder), getPoint(leftElbow), getPoint(leftWrist));
+      const rightAngle = angleBetween(getPoint(rightShoulder), getPoint(rightElbow), getPoint(rightWrist));
+      // Weight by visibility
+      const totalVis = leftChainVis + rightChainVis;
+      rawElbowAngle = (leftAngle * leftChainVis + rightAngle * rightChainVis) / totalVis;
+    } else if (useLeft) {
+      rawElbowAngle = angleBetween(getPoint(leftShoulder), getPoint(leftElbow), getPoint(leftWrist));
+    } else {
+      rawElbowAngle = angleBetween(getPoint(rightShoulder), getPoint(rightElbow), getPoint(rightWrist));
+    }
+
+    // Apply EMA smoothing
+    if (useLeft) {
+      this.smoothedLeftElbowAngle = this.smooth(this.smoothedLeftElbowAngle, rawElbowAngle);
+    }
+    if (useRight) {
+      this.smoothedRightElbowAngle = this.smooth(this.smoothedRightElbowAngle, rawElbowAngle);
+    }
+    const elbowAngle = useLeft && useRight
+      ? (this.smoothedLeftElbowAngle! + this.smoothedRightElbowAngle!) / 2
+      : (useLeft ? this.smoothedLeftElbowAngle! : this.smoothedRightElbowAngle!);
+
+    // Thresholds
+    const EXTENDED_ANGLE = 150; // arms extended = top of pushup
+    const BENT_ANGLE = 100;     // arms bent = bottom of pushup
 
     const errors: string[] = [];
 
-    // Hip sagging detection: straight line should be ~180°, but measured from above can vary
-    // In push-up position, shoulder-hip-ankle should be close to straight
-    // Normal range: 160-180°. Below 160° = sagging
-    if (hipAngle < HIP_SAG_MAX_DEVIATION && hipAngle > 10) {
-      // Convert deviation: 180 minus actual angle
-      if (180 - hipAngle > HIP_SAG_MAX_DEVIATION) {
-        errors.push('hips_sagging');
-      }
-    }
-
-    // State machine
     switch (this.currentPushupState) {
       case 'up':
-        if (elbowAngle < PUSHUP_EXTENDED_ANGLE - 5) {
+        if (elbowAngle < EXTENDED_ANGLE - 8) {
           this.currentPushupState = 'descending';
-          this.bottomAngleReached = Infinity;
+          this.bottomAngleReached = 999;
         }
         break;
 
       case 'descending':
-        if (elbowAngle < PUSHUP_BENT_ANGLE) {
-          this.currentPushupState = 'bottom';
+        if (elbowAngle < this.bottomAngleReached) {
           this.bottomAngleReached = elbowAngle;
           this.lastBottomAngle = elbowAngle;
-
-          // Check for full range
-          if (elbowAngle > PUSHUP_MIN_BEND) {
-            errors.push('partial_rep');
-          }
+        }
+        if (elbowAngle < BENT_ANGLE) {
+          this.currentPushupState = 'bottom';
         }
         break;
 
       case 'bottom':
-        if (elbowAngle > PUSHUP_BENT_ANGLE + 10) {
+        if (elbowAngle < this.bottomAngleReached) {
+          this.bottomAngleReached = elbowAngle;
+          this.lastBottomAngle = elbowAngle;
+        }
+        if (elbowAngle > BENT_ANGLE + 12) {
           this.currentPushupState = 'ascending';
         }
         break;
 
       case 'ascending':
-        if (elbowAngle > PUSHUP_EXTENDED_ANGLE) {
+        if (elbowAngle > EXTENDED_ANGLE) {
+          if (this.bottomAngleReached > BENT_ANGLE + 20) {
+            errors.push('partial_rep');
+          }
           const goodForm = errors.length === 0;
           const repResult = this.addRepResult('pushup', goodForm, errors, this.lastBottomAngle);
           this.currentErrors = errors;
@@ -272,7 +289,7 @@ class ExerciseLogic {
   }
 
   // ==================== JUMPING JACK LOGIC ====================
-  processJumpingJackFrame(landmarks: { x: number; y: number }[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
+  processJumpingJackFrame(landmarks: Landmark[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
     const leftWrist = landmarks[LANDMARKS.LEFT_WRIST];
     const rightWrist = landmarks[LANDMARKS.RIGHT_WRIST];
     const leftShoulder = landmarks[LANDMARKS.LEFT_SHOULDER];
@@ -282,14 +299,27 @@ class ExerciseLogic {
     const leftHip = landmarks[LANDMARKS.LEFT_HIP];
     const rightHip = landmarks[LANDMARKS.RIGHT_HIP];
 
-    const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
-    const hipSpread = Math.abs(rightHip.x - leftHip.x);
-    
-    // Normalize ankle spread by hip width to handle distance from camera
-    const relativeSpread = ankleSpread / hipSpread;
+    // Check visibility
+    const shoulderVis = Math.min(leftShoulder?.visibility ?? 1, rightShoulder?.visibility ?? 1) > MIN_VISIBILITY;
+    const wristVis = Math.min(leftWrist?.visibility ?? 0, rightWrist?.visibility ?? 0) > MIN_VISIBILITY;
+    const ankleVis = Math.min(leftAnkle?.visibility ?? 0, rightAnkle?.visibility ?? 0) > MIN_VISIBILITY;
 
-    const armsUp = leftWrist.y < leftShoulder.y + 0.1 && rightWrist.y < rightShoulder.y + 0.1;
-    const legsOut = relativeSpread > 1.2; // Relaxed from 1.8 for mobile
+    if (!shoulderVis) {
+      return { state: this.currentState, errors: [] };
+    }
+
+    // Arms up: wrists above shoulders (with tolerance)
+    const armsUp = wristVis
+      ? leftWrist.y < leftShoulder.y + 0.05 && rightWrist.y < rightShoulder.y + 0.05
+      : false;
+
+    // Legs out: ankle spread relative to hip width
+    let legsOut = false;
+    if (ankleVis) {
+      const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
+      const hipSpread = Math.abs((rightHip?.x ?? 0.5) - (leftHip?.x ?? 0.5));
+      legsOut = hipSpread > 0.01 ? ankleSpread / hipSpread > 1.3 : ankleSpread > 0.25;
+    }
 
     const errors: string[] = [];
 
@@ -298,9 +328,6 @@ class ExerciseLogic {
       case 'in':
         if (armsUp && legsOut) {
           this.currentState = 'out';
-        } else if (armsUp && !legsOut) {
-          // Warning if they don't jump their legs out
-          if (this.currentState !== 'out') errors.push('lazy_legs');
         }
         break;
 
@@ -308,8 +335,8 @@ class ExerciseLogic {
         if (!armsUp && !legsOut) {
           const goodForm = errors.length === 0;
           const repResult = this.addRepResult('jumping_jack', goodForm, errors);
-          this.currentState = 'standing';
-          return { state: 'standing', errors, currentRep: repResult };
+          this.currentState = 'in';
+          return { state: 'in', errors, currentRep: repResult };
         }
         break;
     }
@@ -347,8 +374,3 @@ class ExerciseLogic {
 
 // Singleton instance for the current session
 export const exerciseLogic = new ExerciseLogic();
-
-// Factory for creating fresh instances when needed
-export function createExerciseLogic(): ExerciseLogic {
-  return new ExerciseLogic();
-}

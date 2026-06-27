@@ -4,88 +4,140 @@ import { sfx } from '../lib/sounds';
 import confetti from 'canvas-confetti';
 import { processWorkout, type Badge } from '../lib/achievements';
 import { motion } from 'framer-motion';
+import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon } from 'lucide-react';
 
 interface Props {
+  userId: string;
+  isGuest: boolean;
   username: string;
   results: RepResult[];
+  exercise: string;
+  durationSeconds: number;
   onRestart: () => void;
 }
 
-export function SessionSummary({ username, results, onRestart }: Props) {
+export function SessionSummary({ userId, isGuest, username, results, exercise, durationSeconds, onRestart }: Props) {
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>([]);
   const totalReps = results.length;
   const goodReps = results.filter(r => r.goodForm).length;
   const formScore = totalReps === 0 ? 0 : Math.round((goodReps / totalReps) * 100);
 
   useEffect(() => {
-    sfx.playCombo(); // Play cool sound on load
+    sfx.playCombo();
     
     if (totalReps > 0) {
-      const newBadges = processWorkout(username, totalReps, formScore);
-      setUnlockedBadges(newBadges);
+      async function handleWorkout() {
+        try {
+          const newBadges = await processWorkout(userId, isGuest, totalReps, formScore, exercise, durationSeconds);
+          setUnlockedBadges(newBadges);
 
-      if (newBadges.length > 0 || formScore >= 80) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#00f0ff', '#8b5cf6', '#ffb800']
-        });
-        
-        if (navigator.vibrate) {
-          navigator.vibrate([200, 100, 200]);
+          if (newBadges.length > 0 || formScore >= 80) {
+            confetti({
+              particleCount: 150,
+              spread: 80,
+              origin: { y: 0.6 },
+              colors: ['#3b82f6', '#8b5cf6', '#fbbf24']
+            });
+            
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to process workout stats:', err);
         }
       }
+      handleWorkout();
     }
-  }, [totalReps, formScore, username]);
+  }, [totalReps, formScore, userId, isGuest, exercise, durationSeconds]);
 
-  const scoreColor = formScore >= 80 ? 'text-[var(--color-hud-cyan)]' : formScore >= 50 ? 'text-[var(--color-hud-amber)]' : 'text-[var(--color-hud-red)]';
+  const scoreColor = formScore >= 80 ? 'text-blue-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
 
-  // Simulated AI Coach
   let aiMessage = "";
+  let specificTip = "";
+  
   if (totalReps === 0) {
-    aiMessage = "Wow. Zero reps. Why did you even turn me on? Pathetic.";
-  } else if (formScore >= 90) {
-    aiMessage = "I've analyzed your movement patterns and frankly... I'm impressed. That was near-perfect biomechanical execution. Keep this up, human.";
-  } else if (formScore >= 60) {
-    aiMessage = "Decent effort, but your form is slipping. My optical sensors caught several errors. You're better than this. Try again with focus.";
+    aiMessage = "Zero reps recorded. Even rest days require more effort than this.";
   } else {
-    aiMessage = "CRITICAL FAILURE. That was painful to watch. Are you even trying, or are your servos malfunctioning? Fix your form immediately.";
+    // Analyze errors to provide specific tips
+    const errorCounts: Record<string, number> = {};
+    results.forEach(r => {
+      r.errors.forEach(e => {
+        errorCounts[e] = (errorCounts[e] || 0) + 1;
+      });
+    });
+    
+    let mostFrequentError = "";
+    let maxErrorCount = 0;
+    Object.entries(errorCounts).forEach(([err, count]) => {
+      if (count > maxErrorCount) {
+        maxErrorCount = count;
+        mostFrequentError = err;
+      }
+    });
+
+    if (formScore >= 90) {
+      aiMessage = "Outstanding biomechanical execution. Your form is exemplary. Keep pushing the limits.";
+      if (mostFrequentError) {
+        specificTip = `Near perfect. Just a slight note: try to minimize "${mostFrequentError}" on fatigue reps.`;
+      }
+    } else if (formScore >= 60) {
+      aiMessage = "Good effort, but your form is slipping. Focus on quality over quantity for the next session.";
+      if (mostFrequentError) {
+        // Map common errors to tips
+        if (mostFrequentError.toLowerCase().includes('depth')) {
+          specificTip = "You're consistently missing depth. Drop the weight or stretch your hips to break parallel.";
+        } else if (mostFrequentError.toLowerCase().includes('knee')) {
+          specificTip = "Your knees are unstable. Actively drive them outwards tracking over your toes.";
+        } else if (mostFrequentError.toLowerCase().includes('back') || mostFrequentError.toLowerCase().includes('chest')) {
+          specificTip = "Keep your chest up and core braced to prevent your back from rounding.";
+        } else if (mostFrequentError.toLowerCase().includes('flared')) {
+          specificTip = "Tuck your elbows to 45 degrees to protect your shoulders.";
+        } else {
+          specificTip = `Main issue to fix: ${mostFrequentError}. Focus on this specific cue next time.`;
+        }
+      }
+    } else {
+      aiMessage = "Critical form failure detected. We need to regress and focus purely on mechanics. Do not sacrifice form.";
+      if (mostFrequentError) {
+        specificTip = `Your primary failure point is: ${mostFrequentError}. Regress the movement until this is corrected.`;
+      }
+    }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 relative z-10 overflow-y-auto">
-      <div className="hud-panel p-8 w-full max-w-3xl mt-12 mb-12">
-        <div className="corner-bracket tl"></div>
-        <div className="corner-bracket tr"></div>
-        <div className="corner-bracket bl"></div>
-        <div className="corner-bracket br"></div>
-
-        <h1 className="text-4xl font-bold mb-8 text-center glow-text">SESSION COMPLETE</h1>
-
-        {/* AI Debrief */}
-        <div className="mb-8 p-6 border border-[var(--color-hud-violet)] bg-[var(--color-hud-violet)]/10 relative">
-          <div className="absolute -top-3 left-4 bg-[var(--color-hud-bg)] px-2 text-xs text-[var(--color-hud-violet)] tracking-widest font-bold">AI COACH DEBRIEF // CLAUDE-SIM</div>
-          <p className="text-lg leading-relaxed text-white">"{aiMessage}"</p>
+    <div className="flex flex-col items-center min-h-screen pt-24 pb-12 px-6 relative z-10 overflow-y-auto w-full">
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 md:p-12 w-full max-w-4xl shadow-2xl">
+        
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+            <Medal className="w-10 h-10 text-blue-500" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Workout Complete, {username}</h1>
+          <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
+            "{aiMessage}"
+          </p>
         </div>
 
         {/* Newly Unlocked Achievements */}
         {unlockedBadges.length > 0 && (
-          <div className="mb-8 p-6 border border-[var(--color-hud-amber)] bg-[var(--color-hud-amber)]/10 relative">
-            <div className="absolute -top-3 left-4 bg-[var(--color-hud-bg)] px-2 text-xs text-[var(--color-hud-amber)] tracking-widest font-bold">ACHIEVEMENTS UNLOCKED</div>
-            <div className="flex gap-4 flex-wrap">
+          <div className="mb-10 p-6 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 rounded-2xl">
+            <h3 className="text-orange-400 font-bold uppercase tracking-widest text-sm mb-4 flex items-center gap-2">
+              <Trophy className="w-4 h-4" /> Achievements Unlocked
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {unlockedBadges.map(badge => (
                 <motion.div 
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 200, damping: 10 }}
                   key={badge.id} 
-                  className="flex items-center gap-3 bg-[var(--color-hud-bg)] border border-[var(--color-hud-amber)]/50 p-3"
+                  className="flex items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-orange-500/10"
                 >
-                  <div className="text-3xl">{badge.icon}</div>
+                  <div className="text-4xl">{badge.icon}</div>
                   <div>
-                    <div className="font-bold text-[var(--color-hud-amber)] text-sm">{badge.title}</div>
-                    <div className="text-xs opacity-70">{badge.description}</div>
+                    <div className="font-bold text-white text-lg">{badge.title}</div>
+                    <div className="text-sm text-slate-400">{badge.description}</div>
                   </div>
                 </motion.div>
               ))}
@@ -93,55 +145,71 @@ export function SessionSummary({ username, results, onRestart }: Props) {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-8 mb-8">
-          <div className="flex-1 bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6 text-center">
-            <div className="text-sm opacity-70 uppercase tracking-widest mb-2">TOTAL REPS</div>
-            <div className="text-5xl font-bold glow-text">{totalReps}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 text-center flex flex-col items-center justify-center">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400" /> Total Reps
+            </div>
+            <div className="text-6xl font-black text-white">{totalReps}</div>
           </div>
-          <div className="flex-1 bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6 text-center">
-            <div className="text-sm opacity-70 uppercase tracking-widest mb-2">FORM SCORE</div>
-            <div className={`text-5xl font-bold glow-text ${scoreColor}`}>{formScore}%</div>
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 text-center flex flex-col items-center justify-center">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">Form Quality</div>
+            <div className={`text-6xl font-black ${scoreColor}`}>{formScore}%</div>
           </div>
+        </div>
+        
+        {/* AI Coach Analysis */}
+        <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 text-center mb-10">
+          <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold mb-2">AI Coach Analysis</h3>
+          <p className="text-white font-medium italic">"{aiMessage}"</p>
+          {specificTip && (
+            <div className="mt-4 bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg text-blue-300 text-sm font-semibold">
+              <span className="font-bold text-blue-400">Pro Tip: </span> {specificTip}
+            </div>
+          )}
         </div>
 
         {totalReps > 0 && (
-          <div className="mb-8 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-[var(--color-hud-cyan)]/30">
-                  <th className="py-2 text-sm opacity-70">REP</th>
-                  <th className="py-2 text-sm opacity-70">STREAK</th>
-                  <th className="py-2 text-sm opacity-70">QUALITY</th>
-                  <th className="py-2 text-sm opacity-70">NOTES</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map(rep => (
-                  <tr key={rep.repNumber} className="border-b border-[var(--color-hud-cyan)]/10">
-                    <td className="py-3 font-bold">{rep.repNumber}</td>
-                    <td className="py-3 text-[var(--color-hud-amber)]">{rep.streak > 1 ? `${rep.streak}x` : '-'}</td>
-                    <td className="py-3">
-                      {rep.goodForm ? (
-                        <span className="text-[var(--color-hud-cyan)] bg-[var(--color-hud-cyan)]/10 px-2 py-1 rounded">OPTIMAL</span>
-                      ) : (
-                        <span className="text-[var(--color-hud-red)] bg-[var(--color-hud-red)]/10 px-2 py-1 rounded">SUBOPTIMAL</span>
-                      )}
-                    </td>
-                    <td className="py-3 text-sm opacity-80">
-                      {rep.errors.length === 0 ? '-' : rep.errors.map(e => e.replace(/_/g, ' ')).join(', ')}
-                    </td>
+          <div className="mb-10 bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div className="max-h-[300px] overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-800/80 sticky top-0 backdrop-blur-md z-10">
+                  <tr>
+                    <th className="py-4 px-6 text-xs text-slate-400 uppercase tracking-widest font-semibold border-b border-slate-700/50">Rep</th>
+                    <th className="py-4 px-6 text-xs text-slate-400 uppercase tracking-widest font-semibold border-b border-slate-700/50">Quality</th>
+                    <th className="py-4 px-6 text-xs text-slate-400 uppercase tracking-widest font-semibold border-b border-slate-700/50">Feedback</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-700/30">
+                  {results.map(rep => (
+                    <tr key={rep.repNumber} className="hover:bg-slate-700/10 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">
+                        {rep.repNumber}
+                        {rep.streak > 1 && <span className="ml-2 text-xs text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">{rep.streak}x Combo</span>}
+                      </td>
+                      <td className="py-4 px-6">
+                        {rep.goodForm ? (
+                          <span className="text-blue-400 text-sm font-semibold flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Optimal</span>
+                        ) : (
+                          <span className="text-red-400 text-sm font-semibold flex items-center gap-1"><XOctagon className="w-4 h-4"/> Suboptimal</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-slate-400 capitalize">
+                        {rep.errors.length === 0 ? '-' : rep.errors.map(e => e.replace(/_/g, ' ')).join(', ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         <button
           onClick={() => { sfx.playClick(); onRestart(); }}
-          className="w-full bg-[var(--color-hud-cyan)]/10 border border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)] py-4 font-bold tracking-widest hover:bg-[var(--color-hud-cyan)] hover:text-[var(--color-hud-bg)] transition-colors cursor-pointer"
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-5 font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
         >
-          INITIALIZE NEW SESSION
+          Finish Workout <ArrowRight className="w-5 h-5" />
         </button>
       </div>
     </div>

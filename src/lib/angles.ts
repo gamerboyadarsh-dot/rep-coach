@@ -52,10 +52,3 @@ export function getPoint(landmark: { x: number; y: number; z?: number }, width: 
     z: landmark.z 
   };
 }
-
-/**
- * Calculate horizontal distance between two points
- */
-export function horizontalDistance(a: Point, b: Point): number {
-  return Math.abs(b.x - a.x);
-}

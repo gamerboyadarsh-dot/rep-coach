@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { sfx } from '../lib/sounds';
+import { BookOpen, CheckCircle2, Activity, Image as ImageIcon } from 'lucide-react';
 
 type GuideTab = 'squat' | 'pushup' | 'jumping_jack';
 
@@ -8,7 +9,8 @@ export function ExerciseGuide() {
 
   const content = {
     squat: {
-      title: 'BODYWEIGHT SQUAT',
+      title: 'Bodyweight Squat',
+      subtitle: 'Lower Body & Core Stability',
       formImage: '/images/squat_form_1782494716211.jpg',
       muscleImage: '/images/squat_muscles_1782494730641.jpg',
       instructions: [
@@ -20,7 +22,8 @@ export function ExerciseGuide() {
       ]
     },
     pushup: {
-      title: 'TACTICAL PUSH-UP',
+      title: 'Tactical Push-up',
+      subtitle: 'Upper Body Strength & Endurance',
       formImage: '/images/pushup_form_1782494744608.jpg',
       muscleImage: '/images/pushup_muscles_1782494767040.jpg',
       instructions: [
@@ -32,7 +35,8 @@ export function ExerciseGuide() {
       ]
     },
     jumping_jack: {
-      title: 'JUMPING JACKS',
+      title: 'Jumping Jacks',
+      subtitle: 'Cardio Intensity & Coordination',
       formImage: '/images/jumping_jack_form_1782494780010.jpg',
       muscleImage: '/images/jumping_jack_muscles_1782494792361.jpg',
       instructions: [
@@ -53,64 +57,86 @@ export function ExerciseGuide() {
   const data = content[activeTab];
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-6 relative z-10 pt-24 overflow-y-auto">
-      <div className="hud-panel p-8 w-full max-w-5xl mb-12">
-        <div className="corner-bracket tl"></div>
-        <div className="corner-bracket tr"></div>
-        <div className="corner-bracket bl"></div>
-        <div className="corner-bracket br"></div>
-
-        <h1 className="text-4xl font-bold mb-8 text-center glow-text uppercase">DATABANK: EXERCISE FORMS</h1>
-
-        <div className="flex flex-wrap gap-4 justify-center mb-8">
-          <button 
-            onClick={() => handleTab('squat')}
-            className={`px-6 py-2 border transition-colors uppercase font-bold tracking-widest cursor-pointer ${activeTab === 'squat' ? 'bg-[var(--color-hud-cyan)]/20 border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)]' : 'border-[var(--color-hud-cyan)]/30 opacity-60 hover:opacity-100'}`}
-          >
-            SQUAT
-          </button>
-          <button 
-            onClick={() => handleTab('pushup')}
-            className={`px-6 py-2 border transition-colors uppercase font-bold tracking-widest cursor-pointer ${activeTab === 'pushup' ? 'bg-[var(--color-hud-cyan)]/20 border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)]' : 'border-[var(--color-hud-cyan)]/30 opacity-60 hover:opacity-100'}`}
-          >
-            PUSH-UP
-          </button>
-          <button 
-            onClick={() => handleTab('jumping_jack')}
-            className={`px-6 py-2 border transition-colors uppercase font-bold tracking-widest cursor-pointer ${activeTab === 'jumping_jack' ? 'bg-[var(--color-hud-cyan)]/20 border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)]' : 'border-[var(--color-hud-cyan)]/30 opacity-60 hover:opacity-100'}`}
-          >
-            JUMPING JACKS
-          </button>
+    <div className="flex flex-col items-center min-h-screen pt-28 pb-12 px-6 relative z-10 overflow-y-auto w-full">
+      <div className="w-full max-w-6xl mx-auto">
+        
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <BookOpen className="w-8 h-8 text-blue-500" />
+          <h1 className="text-4xl font-black text-white tracking-tight">Databank</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Instructions */}
-          <div className="bg-[var(--color-hud-bg)] border border-[var(--color-hud-cyan)]/30 p-6">
-            <h2 className="text-2xl font-bold mb-4 text-[var(--color-hud-violet)] uppercase glow-text">{data.title}</h2>
-            <ul className="space-y-4">
-              {data.instructions.map((inst, i) => (
-                <li key={i} className="flex gap-4 items-start">
-                  <span className="text-[var(--color-hud-cyan)] font-bold opacity-70">0{i+1}</span>
-                  <span className="opacity-90 leading-relaxed">{inst}</span>
-                </li>
-              ))}
-            </ul>
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap justify-center gap-4 mb-10">
+          {[
+            { id: 'squat', label: 'Squats' },
+            { id: 'pushup', label: 'Push-ups' },
+            { id: 'jumping_jack', label: 'Jumping Jacks' }
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => handleTab(tab.id as GuideTab)}
+              className={`px-6 py-3 rounded-2xl font-bold transition-all shadow-lg ${
+                activeTab === tab.id 
+                  ? 'bg-blue-600 text-white shadow-blue-500/25 scale-105' 
+                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50 hover:border-slate-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Instructions Column */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-8 rounded-3xl shadow-2xl">
+              <h2 className="text-3xl font-bold text-white mb-2">{data.title}</h2>
+              <p className="text-blue-400 font-semibold mb-8 uppercase tracking-widest text-sm">{data.subtitle}</p>
+              
+              <div className="space-y-6">
+                {data.instructions.map((inst, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-bold text-sm">
+                      {i + 1}
+                    </div>
+                    <p className="text-slate-300 leading-relaxed pt-1">{inst}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-6 rounded-3xl flex items-start gap-4 shadow-lg">
+              <CheckCircle2 className="w-6 h-6 text-blue-400 shrink-0" />
+              <div>
+                <h4 className="text-white font-bold mb-1">AI Coach Tip</h4>
+                <p className="text-sm text-slate-400 leading-relaxed">Ensure you perform these movements at a controlled pace. The AI model tracks your joint angles and velocity—rushing through reps may cause the tracking confidence to drop.</p>
+              </div>
+            </div>
           </div>
 
-          {/* Images */}
-          <div className="space-y-6">
-            <div className="border border-[var(--color-hud-cyan)]/30 relative group overflow-hidden bg-black/50">
-              <div className="absolute top-2 left-2 bg-[var(--color-hud-bg)] px-2 text-xs opacity-70 font-bold tracking-widest z-10">FORM_ANALYSIS.JPG</div>
-              <img src={data.formImage} alt={`${data.title} Form`} className="w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity mix-blend-screen" />
+          {/* Images Column */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-8 left-8 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-white font-bold tracking-widest flex items-center gap-2 z-10 shadow-lg transition-transform group-hover:-translate-y-1">
+                <ImageIcon className="w-3 h-3 text-blue-400" /> FORM_ANALYSIS.JPG
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 aspect-video flex items-center justify-center">
+                <img src={data.formImage} alt={`${data.title} Form`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-500" />
+              </div>
             </div>
             
-            <div className="border border-[var(--color-hud-violet)]/50 relative group overflow-hidden bg-black/50">
-              <div className="absolute top-2 left-2 bg-[var(--color-hud-bg)] px-2 text-xs text-[var(--color-hud-violet)] opacity-70 font-bold tracking-widest z-10">MUSCLE_TARGETS.JPG</div>
-              <img src={data.muscleImage} alt={`${data.title} Muscles`} className="w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity mix-blend-screen" />
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-8 left-8 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-white font-bold tracking-widest flex items-center gap-2 z-10 shadow-lg transition-transform group-hover:-translate-y-1">
+                <Activity className="w-3 h-3 text-purple-400" /> MUSCLE_TARGETS.JPG
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 aspect-video flex items-center justify-center">
+                <img src={data.muscleImage} alt={`${data.title} Muscles`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-500" />
+              </div>
             </div>
           </div>
+          
         </div>
-
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ const errorMap: Record<string, { message: string; type: 'warning' | 'error' }> =
   knees_caving_in: { message: 'KNEES CAVING IN - PUSH OUT', type: 'error' },
   hips_sagging: { message: 'HIPS SAGGING - KEEP CORE TIGHT', type: 'error' },
   partial_rep: { message: 'PARTIAL REP - GO ALL THE WAY', type: 'warning' },
+  lazy_legs: { message: 'JUMP YOUR LEGS OUT WIDER!', type: 'warning' },
 };
 
 export function FormFeedback({ errors }: Props) {

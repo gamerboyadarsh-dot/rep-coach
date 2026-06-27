@@ -123,8 +123,8 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
               {chartData.map((data, i) => {
                 const heightPercentage = (data.reps / maxChartReps) * 100;
                 return (
-                  <div key={i} className="flex flex-col items-center flex-1 z-10 group">
-                    <div className="w-full max-w-[40px] bg-slate-700/50 rounded-t-lg relative flex items-end justify-center transition-all hover:bg-slate-600/50" style={{ height: '100%' }}>
+                  <div key={i} className="flex flex-col items-center flex-1 z-10 group h-full">
+                    <div className="w-full max-w-[40px] bg-slate-700/50 rounded-t-lg relative flex items-end justify-center transition-all hover:bg-slate-600/50 flex-1">
                       <div 
                         className="w-full bg-blue-500 rounded-t-lg transition-all duration-1000 ease-out group-hover:bg-blue-400"
                         style={{ height: `${heightPercentage}%` }}

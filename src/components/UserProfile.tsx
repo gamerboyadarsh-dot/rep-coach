@@ -17,6 +17,17 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
   const [isLoading, setIsLoading] = useState(true);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  
+  const [isLightMode, setIsLightMode] = useState(() => localStorage.getItem('repCoach_theme') === 'light');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => localStorage.getItem('repCoach_notifications') === 'true');
+
+  useEffect(() => {
+    if (isLightMode) {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+  }, [isLightMode]);
 
   useEffect(() => {
     async function fetchStats() {
@@ -51,6 +62,34 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
     const id = e.target.value;
     setSelectedCamera(id);
     localStorage.setItem('repCoach_camera_deviceId', id);
+  };
+
+  const toggleTheme = () => {
+    sfx.playClick();
+    const newVal = !isLightMode;
+    setIsLightMode(newVal);
+    localStorage.setItem('repCoach_theme', newVal ? 'light' : 'dark');
+  };
+
+  const toggleNotifications = async () => {
+    sfx.playClick();
+    if (!notificationsEnabled) {
+      if (window.Notification) {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          setNotificationsEnabled(true);
+          localStorage.setItem('repCoach_notifications', 'true');
+          new Notification("Rep Coach", { body: "Streak reminders enabled!" });
+        } else {
+          alert("Notification permission denied by browser.");
+        }
+      } else {
+        alert("Notifications are not supported by this browser.");
+      }
+    } else {
+      setNotificationsEnabled(false);
+      localStorage.setItem('repCoach_notifications', 'false');
+    }
   };
 
   const getRank = (reps: number) => {
@@ -196,21 +235,21 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
                 </select>
               </div>
 
-              {/* Theme Toggle Placeholder */}
+              {/* Theme Toggle */}
               <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Moon className="w-5 h-5 text-purple-400" />
                   <div>
                     <h4 className="text-white font-bold">Theme Mode</h4>
-                    <p className="text-xs text-slate-400">Dark mode is currently locked</p>
+                    <p className="text-xs text-slate-400">Light or Dark mode</p>
                   </div>
                 </div>
-                <div className="bg-slate-900 rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-not-allowed opacity-50">
-                  <div className="bg-blue-500 w-4 h-4 rounded-full translate-x-6"></div>
+                <div onClick={toggleTheme} className={`rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-pointer transition-colors ${isLightMode ? 'bg-blue-600' : 'bg-slate-900'}`}>
+                  <div className={`w-4 h-4 rounded-full transition-transform ${isLightMode ? 'bg-white translate-x-6' : 'bg-blue-500 translate-x-0'}`}></div>
                 </div>
               </div>
 
-              {/* Notifications Toggle Placeholder */}
+              {/* Notifications Toggle */}
               <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-yellow-400" />
@@ -219,8 +258,8 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
                     <p className="text-xs text-slate-400">Streak reminders</p>
                   </div>
                 </div>
-                <div className="bg-slate-900 rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-pointer">
-                  <div className="bg-slate-600 w-4 h-4 rounded-full"></div>
+                <div onClick={toggleNotifications} className={`rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-pointer transition-colors ${notificationsEnabled ? 'bg-blue-600' : 'bg-slate-900'}`}>
+                  <div className={`w-4 h-4 rounded-full transition-transform ${notificationsEnabled ? 'bg-white translate-x-6' : 'bg-slate-600 translate-x-0'}`}></div>
                 </div>
               </div>
 

@@ -22,16 +22,16 @@ export interface RepResult {
 }
 
 // Squat thresholds
-const SQUAT_DEPTH_ANGLE = 100; // Below this = squat depth
-const SQUAT_STANDING_ANGLE = 160; // Above this = standing
-const SQUAT_MIN_DEPTH = 110; // Anything > this is shallow
-const KNEE_VALGUS_THRESHOLD = 0.08; // Knee x-spread vs ankle x-spread ratio
+const SQUAT_DEPTH_ANGLE = 120; // Relaxed from 100 for easier mobile detection
+const SQUAT_STANDING_ANGLE = 150; // Relaxed from 160
+const SQUAT_MIN_DEPTH = 130; 
+const KNEE_VALGUS_THRESHOLD = 0.08; 
 
 // Push-up thresholds
-const PUSHUP_EXTENDED_ANGLE = 160;
-const PUSHUP_BENT_ANGLE = 90;
-const PUSHUP_MIN_BEND = 100; // Anything > this is partial
-const HIP_SAG_MAX_DEVIATION = 25; // Max deviation from 180° straight line
+const PUSHUP_EXTENDED_ANGLE = 145; // Relaxed from 160
+const PUSHUP_BENT_ANGLE = 110; // Relaxed from 90
+const PUSHUP_MIN_BEND = 125; 
+const HIP_SAG_MAX_DEVIATION = 35; // Relaxed from 25
 
 // Landmark indices from MediaPipe Pose
 export const LANDMARKS = {
@@ -276,8 +276,8 @@ class ExerciseLogic {
     // Normalize ankle spread by hip width to handle distance from camera
     const relativeSpread = ankleSpread / hipSpread;
 
-    const armsUp = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
-    const legsOut = relativeSpread > 1.8; // Ankles significantly wider than hips
+    const armsUp = leftWrist.y < leftShoulder.y + 0.1 && rightWrist.y < rightShoulder.y + 0.1;
+    const legsOut = relativeSpread > 1.2; // Relaxed from 1.8 for mobile
 
     const errors: string[] = [];
 

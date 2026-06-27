@@ -13,7 +13,7 @@ export function AuthScreen({ onLogin }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    if (!auth) {
+    if (!auth || !googleProvider) {
       setError("Firebase is not configured. Please add keys to .env");
       sfx.playError();
       return;
@@ -32,7 +32,7 @@ export function AuthScreen({ onLogin }: Props) {
   };
 
   const handleGithubSignIn = async () => {
-    if (!auth) {
+    if (!auth || !githubProvider) {
       setError("Firebase is not configured. Please add keys to .env");
       sfx.playError();
       return;

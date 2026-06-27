@@ -66,13 +66,23 @@ function App() {
     if (appState !== 'workout' || !landmarks || landmarks.length === 0) return;
 
     if (exercise === 'squat') {
-      const { state, errors: newErrors } = exerciseLogic.processSquatFrame(landmarks);
+      const { state, errors: newErrors } = exerciseLogic.processSquatFrame(
+        landmarks, 
+        videoRef.current?.videoWidth || 1, 
+        videoRef.current?.videoHeight || 1
+      );
       setExerciseState(state);
       setErrors(newErrors);
     } else if (exercise === 'pushup') {
       // Find shoulder Y to help with logic if needed
       const leftShoulder = landmarks[11]; // LANDMARKS.LEFT_SHOULDER
-      const { state, errors: newErrors } = exerciseLogic.processPushupFrame(landmarks, leftShoulder?.y || 0, true); // Using left side by default
+      const { state, errors: newErrors } = exerciseLogic.processPushupFrame(
+        landmarks, 
+        leftShoulder?.y || 0, 
+        true,
+        videoRef.current?.videoWidth || 1, 
+        videoRef.current?.videoHeight || 1
+      ); // Using left side by default
       setExerciseState(state);
       setErrors(newErrors);
     } else if (exercise === 'jumping_jack') {

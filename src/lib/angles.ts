@@ -24,10 +24,14 @@ export function angleBetween(a: Point, b: Point, c: Point): number {
 }
 
 /**
- * Get landmark as Point (normalized 0-1 coordinates)
+ * Get landmark as Point (normalized 0-1 coordinates scaled to actual pixels to fix aspect ratio distortion)
  */
-export function getPoint(landmark: { x: number; y: number; z?: number }): Point {
-  return { x: landmark.x, y: landmark.y, z: landmark.z };
+export function getPoint(landmark: { x: number; y: number; z?: number }, width: number = 1, height: number = 1): Point {
+  return { 
+    x: landmark.x * width, 
+    y: landmark.y * height, 
+    z: landmark.z 
+  };
 }
 
 /**

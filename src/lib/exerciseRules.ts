@@ -104,13 +104,13 @@ class ExerciseLogic {
   }
 
   // ==================== SQUAT LOGIC ====================
-  processSquatFrame(landmarks: { x: number; y: number }[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
-    const hip = getPoint(landmarks[LANDMARKS.LEFT_HIP]);
-    const knee = getPoint(landmarks[LANDMARKS.LEFT_KNEE]);
-    const ankle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE]);
-    const rightHip = getPoint(landmarks[LANDMARKS.RIGHT_HIP]);
-    const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE]);
-    const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE]);
+  processSquatFrame(landmarks: { x: number; y: number }[], width: number = 1, height: number = 1): { state: RepState; errors: string[]; currentRep?: RepResult } {
+    const hip = getPoint(landmarks[LANDMARKS.LEFT_HIP], width, height);
+    const knee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
+    const ankle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE], width, height);
+    const rightHip = getPoint(landmarks[LANDMARKS.RIGHT_HIP], width, height);
+    const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE], width, height);
+    const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE], width, height);
 
     // Use average of both legs
     const avgHip = { x: (hip.x + rightHip.x) / 2, y: (hip.y + rightHip.y) / 2 };
@@ -145,10 +145,10 @@ class ExerciseLogic {
           }
 
           // Check for knee valgus at bottom
-          const leftAnkle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE]);
-          const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE]);
-          const leftKnee = getPoint(landmarks[LANDMARKS.LEFT_KNEE]);
-          const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE]);
+          const leftAnkle = getPoint(landmarks[LANDMARKS.LEFT_ANKLE], width, height);
+          const rightAnkle = getPoint(landmarks[LANDMARKS.RIGHT_ANKLE], width, height);
+          const leftKnee = getPoint(landmarks[LANDMARKS.LEFT_KNEE], width, height);
+          const rightKnee = getPoint(landmarks[LANDMARKS.RIGHT_KNEE], width, height);
 
           // X-distance between ankles and knees
           const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
@@ -186,18 +186,18 @@ class ExerciseLogic {
   }
 
   // ==================== PUSH-UP LOGIC ====================
-  processPushupFrame(landmarks: { x: number; y: number }[], shoulderY: number, isLeftSide?: boolean): { state: PushupState; errors: string[]; currentRep?: RepResult } {
+  processPushupFrame(landmarks: { x: number; y: number }[], shoulderY: number, isLeftSide?: boolean, width: number = 1, height: number = 1): { state: PushupState; errors: string[]; currentRep?: RepResult } {
     const elbowIdx = isLeftSide ? LANDMARKS.LEFT_ELBOW : LANDMARKS.RIGHT_ELBOW;
     const shoulderIdx = isLeftSide ? LANDMARKS.LEFT_SHOULDER : LANDMARKS.RIGHT_SHOULDER;
     const wristIdx = isLeftSide ? LANDMARKS.LEFT_WRIST : LANDMARKS.RIGHT_WRIST;
     const hipIdx = LANDMARKS.LEFT_HIP;
     const ankleIdx = LANDMARKS.LEFT_ANKLE;
 
-    const elbow = getPoint(landmarks[elbowIdx]);
-    const shoulder = getPoint(landmarks[shoulderIdx]);
-    const wrist = getPoint(landmarks[wristIdx]);
-    const hip = getPoint(landmarks[hipIdx]);
-    const ankle = getPoint(landmarks[ankleIdx]);
+    const elbow = getPoint(landmarks[elbowIdx], width, height);
+    const shoulder = getPoint(landmarks[shoulderIdx], width, height);
+    const wrist = getPoint(landmarks[wristIdx], width, height);
+    const hip = getPoint(landmarks[hipIdx], width, height);
+    const ankle = getPoint(landmarks[ankleIdx], width, height);
 
     // Elbow angle
     const elbowAngle = angleBetween(shoulder, elbow, wrist);

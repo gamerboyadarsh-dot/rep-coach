@@ -16,7 +16,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-hud-bg);
   color: #f8fafc;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Premium Layout Elements */

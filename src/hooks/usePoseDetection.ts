@@ -10,6 +10,8 @@ export interface UsePoseDetectionReturn {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   startCamera: () => Promise<void>;
   stopCamera: () => void;
+  toggleCamera: () => Promise<void>;
+  facingMode: 'user' | 'environment';
   error: string | null;
 }
 
@@ -17,6 +19,7 @@ export function usePoseDetection(): UsePoseDetectionReturn {
   const [isLoaded, setIsLoaded] = useState(false);
   const [landmarks, setLandmarks] = useState<{ x: number; y: number }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,10 +29,10 @@ export function usePoseDetection(): UsePoseDetectionReturn {
   const lastResultTimeRef = useRef<number>(0);
   const runningRef = useRef(false);
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode: 'user' | 'environment' = facingMode) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720, facingMode: 'user' },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: mode },
       });
       streamRef.current = stream;
 
@@ -41,7 +44,7 @@ export function usePoseDetection(): UsePoseDetectionReturn {
       setError(`Camera access denied: ${err instanceof Error ? err.message : 'Unknown error'}`);
       throw err;
     }
-  }, []);
+  }, [facingMode]);
 
   const stopCamera = useCallback(() => {
     runningRef.current = false;
@@ -64,6 +67,12 @@ export function usePoseDetection(): UsePoseDetectionReturn {
     }
 
     const video = videoRef.current;
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      // Video not fully ready yet, wait for next frame
+      animationFrameRef.current = requestAnimationFrame(predictWebcam);
+      return;
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -103,6 +112,18 @@ export function usePoseDetection(): UsePoseDetectionReturn {
 
     animationFrameRef.current = requestAnimationFrame(predictWebcam);
   }, []);
+
+  const toggleCamera = useCallback(async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newMode);
+    
+    if (runningRef.current) {
+      stopCamera();
+      await startCamera(newMode);
+      runningRef.current = true;
+      predictWebcam();
+    }
+  }, [facingMode, startCamera, stopCamera, predictWebcam]);
 
   useEffect(() => {
     const initPose = async () => {
@@ -154,6 +175,8 @@ export function usePoseDetection(): UsePoseDetectionReturn {
     canvasRef,
     startCamera,
     stopCamera,
+    toggleCamera,
+    facingMode,
     error,
   };
 }

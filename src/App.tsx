@@ -34,6 +34,8 @@ function App() {
     canvasRef,
     startCamera,
     stopCamera,
+    toggleCamera,
+    facingMode,
     error: cameraError
   } = usePoseDetection();
 
@@ -142,11 +144,13 @@ function App() {
       {appState === 'workout' && (
         <>
           <CameraView 
-            videoRef={videoRef}
-            canvasRef={canvasRef}
-            isLoaded={isLoaded}
-            error={cameraError}
-          />
+          videoRef={videoRef} 
+          canvasRef={canvasRef} 
+          isLoaded={isLoaded} 
+          error={cameraError} 
+          facingMode={facingMode}
+          onToggleCamera={toggleCamera}
+        />
           <WorkoutHUD
             exercise={exercise}
             repCount={repCount}

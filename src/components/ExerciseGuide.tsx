@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { sfx } from '../lib/sounds';
 import { BookOpen, CheckCircle2, Activity, Image as ImageIcon } from 'lucide-react';
+import Model from 'react-body-highlighter';
+import type { IExerciseData } from 'react-body-highlighter';
 
 type GuideTab = 'squat' | 'pushup' | 'jumping_jack';
 
@@ -11,8 +13,8 @@ export function ExerciseGuide() {
     squat: {
       title: 'Bodyweight Squat',
       subtitle: 'Lower Body & Core Stability',
-      formImage: '/images/squat_form_1782494716211.jpg',
-      muscleImage: '/images/squat_muscles_1782494730641.jpg',
+      formImage: '/images/realistic_squat_form.jpg',
+      muscles: [{ name: 'Squat', muscles: ['gluteal', 'quadriceps', 'hamstring', 'calves'] }] as IExerciseData[],
       instructions: [
         'Stand with feet shoulder-width apart.',
         'Keep your back straight and chest up.',
@@ -24,8 +26,8 @@ export function ExerciseGuide() {
     pushup: {
       title: 'Tactical Push-up',
       subtitle: 'Upper Body Strength & Endurance',
-      formImage: '/images/pushup_form_1782494744608.jpg',
-      muscleImage: '/images/pushup_muscles_1782494767040.jpg',
+      formImage: '/images/realistic_pushup_form.jpg',
+      muscles: [{ name: 'Push-up', muscles: ['chest', 'triceps', 'front-deltoids', 'abdominals'] }] as IExerciseData[],
       instructions: [
         'Assume a plank position with hands slightly wider than shoulder-width.',
         'Keep your body in a straight line from head to heels.',
@@ -37,8 +39,8 @@ export function ExerciseGuide() {
     jumping_jack: {
       title: 'Jumping Jacks',
       subtitle: 'Cardio Intensity & Coordination',
-      formImage: '/images/jumping_jack_form_1782494780010.jpg',
-      muscleImage: '/images/jumping_jack_muscles_1782494792361.jpg',
+      formImage: '/images/realistic_jumping_jack_form.jpg',
+      muscles: [{ name: 'Jumping Jacks', muscles: ['calves', 'gluteal', 'front-deltoids', 'back-deltoids'] }] as IExerciseData[],
       instructions: [
         'Stand upright with your legs together and arms at your sides.',
         'Jump into the air while simultaneously spreading your legs wider than shoulder-width.',
@@ -128,10 +130,13 @@ export function ExerciseGuide() {
             
             <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
               <div className="absolute top-8 left-8 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-white font-bold tracking-widest flex items-center gap-2 z-10 shadow-lg transition-transform group-hover:-translate-y-1">
-                <Activity className="w-3 h-3 text-purple-400" /> MUSCLE_TARGETS.JPG
+                <Activity className="w-3 h-3 text-purple-400" /> INTERACTIVE_TARGETS
               </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 aspect-video flex items-center justify-center">
-                <img src={data.muscleImage} alt={`${data.title} Muscles`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-500" />
+              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 flex items-center justify-center p-4">
+                <div className="w-full flex justify-around opacity-90 group-hover:opacity-100 transition-opacity duration-500 max-h-[300px]">
+                  <Model data={data.muscles} type="anterior" style={{ width: '120px', padding: '1rem' }} highlightedColors={['#0ea5e9']} />
+                  <Model data={data.muscles} type="posterior" style={{ width: '120px', padding: '1rem' }} highlightedColors={['#8b5cf6']} />
+                </div>
               </div>
             </div>
           </div>

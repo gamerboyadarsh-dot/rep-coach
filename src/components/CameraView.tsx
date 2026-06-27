@@ -28,7 +28,7 @@ export function CameraView({ videoRef, canvasRef, isLoaded, error, facingMode, o
       {isLoaded && !error && (
         <button 
           onClick={onToggleCamera}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[60] hud-panel px-6 py-3 border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)] uppercase tracking-widest text-sm font-bold bg-black/50 hover:bg-[var(--color-hud-cyan)] hover:text-black transition-colors pointer-events-auto"
+          className="absolute bottom-44 md:bottom-8 left-1/2 -translate-x-1/2 z-[60] hud-panel px-4 py-2 md:px-6 md:py-3 border-[var(--color-hud-cyan)] text-[var(--color-hud-cyan)] uppercase tracking-widest text-xs md:text-sm font-bold bg-black/50 hover:bg-[var(--color-hud-cyan)] hover:text-black transition-colors pointer-events-auto"
         >
           {facingMode === 'user' ? 'USE REAR CAMERA' : 'USE FRONT CAMERA'}
         </button>

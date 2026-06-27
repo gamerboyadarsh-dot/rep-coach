@@ -27,7 +27,7 @@ export function ExerciseGuide() {
       title: 'Tactical Push-up',
       subtitle: 'Upper Body Strength & Endurance',
       formImage: '/images/realistic_pushup_form.jpg',
-      muscles: [{ name: 'Push-up', muscles: ['chest', 'triceps', 'front-deltoids', 'abdominals'] }] as IExerciseData[],
+      muscles: [{ name: 'Push-up', muscles: ['chest', 'triceps', 'front-deltoids', 'abs'] }] as IExerciseData[],
       instructions: [
         'Assume a plank position with hands slightly wider than shoulder-width.',
         'Keep your body in a straight line from head to heels.',

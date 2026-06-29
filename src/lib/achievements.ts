@@ -33,6 +33,8 @@ export interface UserStats {
   badges: Record<string, Badge>;
   workoutHistory: WorkoutSession[];
   personalRecords: PersonalRecords;
+  weight?: number;
+  height?: number;
 }
 
 export const defaultBadges: Record<string, Badge> = {
@@ -51,7 +53,9 @@ function getLocalStats(userId: string): UserStats | null {
         ...parsed,
         badges: { ...defaultBadges, ...parsed.badges },
         workoutHistory: parsed.workoutHistory || [],
-        personalRecords: parsed.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 }
+        personalRecords: parsed.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 },
+        weight: parsed.weight,
+        height: parsed.height
       };
     }
   } catch (e) {
@@ -89,7 +93,9 @@ export async function loadStats(userId: string, isGuest: boolean): Promise<UserS
         ...remoteStats,
         badges: { ...defaultBadges, ...(remoteStats.badges || {}) },
         workoutHistory: remoteStats.workoutHistory || [],
-        personalRecords: remoteStats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 }
+        personalRecords: remoteStats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 },
+        weight: remoteStats.weight,
+        height: remoteStats.height
       };
     }
     return getLocalStats(userId) || defaultStats;

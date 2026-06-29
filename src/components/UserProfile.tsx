@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { sfx } from '../lib/sounds';
-import { loadStats, type UserStats } from '../lib/achievements';
+import { loadStats, saveStats, type UserStats } from '../lib/achievements';
 import { motion } from 'framer-motion';
 import { Trophy, Activity, Flame, LogOut, Award, Star, Medal, Settings, Video, Moon, Bell, History } from 'lucide-react';
 
@@ -57,6 +57,42 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
       });
     }
   }, [userId, isGuest]);
+
+  const [weight, setWeight] = useState<number | ''>('');
+  const [height, setHeight] = useState<number | ''>('');
+
+  useEffect(() => {
+    if (stats) {
+      setWeight(stats.weight || '');
+      setHeight(stats.height || '');
+    }
+  }, [stats]);
+
+  const handleWeightChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const num = val === '' ? '' : Number(val);
+    setWeight(num);
+    if (stats) {
+      const updated = { ...stats, weight: typeof num === 'number' ? num : undefined };
+      setStats(updated);
+      await saveStats(userId, updated, isGuest);
+    }
+  };
+
+  const handleHeightChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const num = val === '' ? '' : Number(val);
+    setHeight(num);
+    if (stats) {
+      const updated = { ...stats, height: typeof num === 'number' ? num : undefined };
+      setStats(updated);
+      await saveStats(userId, updated, isGuest);
+    }
+  };
+
+  const bmi = (typeof weight === 'number' && typeof height === 'number' && height > 0)
+    ? (weight / ((height / 100) * (height / 100))).toFixed(1)
+    : null;
 
   const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
@@ -208,6 +244,42 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
               <Settings className="w-6 h-6 text-slate-400" /> Settings
             </h2>
             <div className="flex flex-col gap-4">
+              
+              {/* Body Metrics */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <Activity className="w-5 h-5 text-green-400" />
+                  <h4 className="text-white font-bold">Body Metrics</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 uppercase font-bold">Weight (kg)</label>
+                    <input 
+                      type="number" 
+                      value={weight} 
+                      onChange={handleWeightChange} 
+                      placeholder="e.g. 75"
+                      className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 uppercase font-bold">Height (cm)</label>
+                    <input 
+                      type="number" 
+                      value={height} 
+                      onChange={handleHeightChange} 
+                      placeholder="e.g. 180"
+                      className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                {bmi && (
+                  <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                    <div className="text-sm text-white font-bold mb-1">BMI: <span className="text-green-400">{bmi}</span></div>
+                    <div className="text-[10px] text-slate-400 leading-tight">BMI is a general screening number, not a full picture of health.</div>
+                  </div>
+                )}
+              </div>
               
               {/* Camera Picker */}
               <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

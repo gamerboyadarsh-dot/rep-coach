@@ -33,6 +33,7 @@ function App() {
   const [isGuest, setIsGuest] = useState(false);
   const [exercise, setExercise] = useState<ExerciseType>('squat');
   const [goal, setGoal] = useState<number | null>(null);
+  const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -141,7 +142,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<FullScreenLoader />}>
-        <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
+        <div className="flex flex-col min-h-screen bg-slate-950 text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
           
           {/* Navigation Bar */}
           {appState !== 'auth' && appState !== 'workout' && (
@@ -272,6 +273,53 @@ function App() {
               onRestart={() => setAppState('selecting')}
             />
           )}
+
+          {/* Footer */}
+          {appState !== 'workout' && (
+            <footer className="w-full py-6 text-center text-slate-500 text-sm mt-auto relative z-10 border-t border-slate-800/50 bg-slate-950/80 backdrop-blur-sm">
+              <p>Copyright © 2026 Rep Coach.</p>
+              <div className="flex justify-center gap-4 mt-2">
+                <button onClick={() => setLegalModal('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
+                <span>|</span>
+                <button onClick={() => setLegalModal('terms')} className="hover:text-blue-400 transition-colors">Terms of Service</button>
+              </div>
+            </footer>
+          )}
+
+          {/* Legal Modal */}
+          {legalModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  {legalModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
+                </h2>
+                <div className="text-slate-300 text-sm space-y-4 mb-6">
+                  {legalModal === 'privacy' ? (
+                    <>
+                      <p><strong>1. Data Collection:</strong> We collect basic account information via Firebase Authentication (email, name, profile picture) and workout statistics to provide you with your fitness dashboard.</p>
+                      <p><strong>2. Local Processing:</strong> All AI pose detection and camera feeds are processed locally in your browser. Video feeds are never recorded or sent to any server.</p>
+                      <p><strong>3. Data Sharing:</strong> We do not sell or share your personal data with any third parties.</p>
+                      <p><strong>4. Contact:</strong> For privacy inquiries, please contact privacy@repcoach.example.com.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p><strong>1. Acceptance of Terms:</strong> By using Rep Coach, you agree to these Terms of Service.</p>
+                      <p><strong>2. Health Disclaimer:</strong> Rep Coach is an AI-powered fitness tool, not a medical device. Always consult with a physician before starting any exercise program. You assume all risks associated with the physical activities tracked by this application.</p>
+                      <p><strong>3. Service Availability:</strong> We strive to keep the app online, but provide the service "as is" without guarantees of uptime.</p>
+                      <p><strong>4. Account Responsibility:</strong> You are responsible for maintaining the security of your account credentials.</p>
+                    </>
+                  )}
+                </div>
+                <button 
+                  onClick={() => setLegalModal(null)}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       </Suspense>
     </ErrorBoundary>

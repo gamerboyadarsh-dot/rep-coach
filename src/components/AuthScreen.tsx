@@ -13,6 +13,15 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const getFriendlyErrorMessage = (err: any): string | null => {
+    const code = err?.code || '';
+    if (code === 'auth/unauthorized-domain') return "Sign-in isn't available from this domain right now — try Continue as Guest.";
+    if (code === 'auth/popup-closed-by-user') return null;
+    if (code === 'auth/popup-blocked') return "Your browser blocked the sign-in popup — try allowing popups for this site, or continue as Guest.";
+    if (code === 'auth/network-request-failed') return "Couldn't reach the sign-in service — check your connection or continue as Guest.";
+    return "Sign-in failed — you can continue as Guest instead.";
+  };
+
   const handleGoogleSignIn = async () => {
     if (!auth || !googleProvider) {
       setError("Firebase is not configured. Please add keys to .env");
@@ -25,8 +34,13 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
       const result = await signInWithPopup(auth, googleProvider);
       onLogin(result.user.uid, result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined, false);
     } catch (err: any) {
-      setError(err.message);
-      sfx.playError();
+      const msg = getFriendlyErrorMessage(err);
+      if (msg) {
+        setError(msg);
+        sfx.playError();
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -44,8 +58,13 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
       const result = await signInWithPopup(auth, githubProvider);
       onLogin(result.user.uid, result.user.displayName || result.user.email || 'User', result.user.photoURL || undefined, false);
     } catch (err: any) {
-      setError(err.message);
-      sfx.playError();
+      const msg = getFriendlyErrorMessage(err);
+      if (msg) {
+        setError(msg);
+        sfx.playError();
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }

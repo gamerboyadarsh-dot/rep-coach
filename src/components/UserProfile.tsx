@@ -21,6 +21,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
   
   const [isLightMode, setIsLightMode] = useState(() => localStorage.getItem('repCoach_theme') === 'light');
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => localStorage.getItem('repCoach_notifications') === 'true');
+  const [voiceEnabled, setVoiceEnabled] = useState(() => localStorage.getItem('repCoach_voice') !== 'false');
   const [coachPersonality, setCoachPersonality] = useState(() => localStorage.getItem('repCoach_personality') || 'supportive');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +175,13 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
       setNotificationsEnabled(false);
       localStorage.setItem('repCoach_notifications', 'false');
     }
+  };
+
+  const toggleVoiceSetting = () => {
+    sfx.playClick();
+    const newVal = !voiceEnabled;
+    setVoiceEnabled(newVal);
+    sfx.setVoiceEnabled(newVal);
   };
 
   const handlePersonalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -380,6 +388,20 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                   <option value="supportive">Supportive Coach 🧘‍♀️</option>
                   <option value="drill_sergeant">Drill Sergeant 🪖</option>
                 </select>
+              </div>
+
+              {/* Voice Feedback Toggle */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Mic className="w-5 h-5 text-green-400" />
+                  <div>
+                    <h4 className="text-white font-bold">Voice Feedback</h4>
+                    <p className="text-xs text-slate-400">Audio cues and rep counts</p>
+                  </div>
+                </div>
+                <div onClick={toggleVoiceSetting} className={`rounded-full w-12 h-6 border border-slate-700 flex items-center p-1 cursor-pointer transition-colors ${voiceEnabled ? 'bg-green-600' : 'bg-slate-900'}`}>
+                  <div className={`w-4 h-4 rounded-full transition-transform ${voiceEnabled ? 'bg-white translate-x-6' : 'bg-slate-600 translate-x-0'}`}></div>
+                </div>
               </div>
 
               {/* Theme Toggle */}

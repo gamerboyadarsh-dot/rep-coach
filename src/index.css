@@ -99,6 +99,7 @@ html.light-theme {
 
 html.light-theme img,
 html.light-theme video,
-html.light-theme canvas {
+html.light-theme canvas,
+html.light-theme svg.google-logo {
   filter: invert(1) hue-rotate(180deg);
 }

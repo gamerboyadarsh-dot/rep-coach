@@ -11,6 +11,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.message && (e.message.includes('Failed to fetch dynamically imported module') || e.message.includes('Importing a module script failed'))) {
+          // If we encounter a chunk load error due to a new deployment, force a hard reload
+          console.warn('Chunk load error detected. Reloading...');
+          window.location.reload();
+        }
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

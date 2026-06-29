@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { processWorkout, type Badge } from '../lib/achievements';
 import { motion } from 'framer-motion';
 import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame, Share2 } from 'lucide-react';
+import { saveGhostChallenge } from '../lib/ghostChallenges';
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60);
@@ -19,14 +20,43 @@ interface Props {
   results: RepResult[];
   exercise: string;
   durationSeconds: number;
+  bestRepFrames?: string[];
+  repTimestamps?: number[];
   onRestart: () => void;
 }
 
-export function SessionSummary({ userId, isGuest, username, results, exercise, durationSeconds, onRestart }: Props) {
+function HighlightReplay({ frames }: { frames: string[] }) {
+  const [frameIndex, setFrameIndex] = useState(0);
+
+  useEffect(() => {
+    if (!frames || frames.length === 0) return;
+    const interval = setInterval(() => {
+      setFrameIndex(i => (i + 1) % frames.length);
+    }, 125); // ~8fps to match capture rate
+    return () => clearInterval(interval);
+  }, [frames]);
+
+  if (!frames || frames.length === 0) return null;
+
+  return (
+    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 text-center mb-10 overflow-hidden shadow-2xl relative">
+      <div className="absolute top-6 left-6 z-10 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-black tracking-widest animate-pulse flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-white"></div> REPLAY
+      </div>
+      <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold mb-4">Instant Highlight: Best Rep</h3>
+      <div className="relative w-full max-w-sm mx-auto aspect-[3/4] rounded-xl overflow-hidden border-2 border-slate-700 shadow-inner">
+        <img src={frames[frameIndex]} className="w-full h-full object-cover" alt="Replay Frame" />
+      </div>
+    </div>
+  );
+}
+
+export function SessionSummary({ userId, isGuest, username, results, exercise, durationSeconds, bestRepFrames, repTimestamps, onRestart }: Props) {
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>([]);
   const [sessionCalories, setSessionCalories] = useState<number>(0);
   const [isNewPR, setIsNewPR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   
   const personality = localStorage.getItem('repCoach_personality') || 'supportive';
   
@@ -145,17 +175,35 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     }
   }
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    if (isSharing) return;
     sfx.playClick();
+    setIsSharing(true);
+
+    let challengeUrl = 'https://repcoach-hackathon-live.surge.sh';
+
+    if (repTimestamps && repTimestamps.length > 0) {
+      const ghostId = await saveGhostChallenge({
+        creatorName: username,
+        exercise,
+        goal: totalReps,
+        timestamps: repTimestamps
+      });
+      if (ghostId) {
+        challengeUrl = `https://repcoach-hackathon-live.surge.sh?challenge=${ghostId}`;
+      }
+    }
+
     const exName = exercise === 'plank' ? 'Plank (Hold)' : exercise.replace('_', ' ');
     const statText = exercise === 'plank' ? `Hold Time: ${totalReps}s` : `Reps: ${totalReps}`;
-    const text = `🦾 Rep Coach | ${exName.toUpperCase()} | ${statText} | Form: ${formScore}% 🔥\nTry to beat me: https://repcoach-hackathon-live.surge.sh`;
+    const text = `🦾 Rep Coach | ${exName.toUpperCase()} | ${statText} | Form: ${formScore}% 🔥\nTry to beat me: ${challengeUrl}`;
     
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+    setIsSharing(false);
   };
 
   return (
@@ -225,6 +273,11 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           </div>
         </div>
         
+        {/* Instant Highlight Replay */}
+        {bestRepFrames && bestRepFrames.length > 0 && (
+          <HighlightReplay frames={bestRepFrames} />
+        )}
+
         {/* AI Coach Analysis */}
         <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 text-center mb-10">
           <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold mb-2">AI Coach Analysis</h3>
@@ -273,12 +326,18 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
         )}
 
         <div className="flex flex-col sm:flex-row gap-4 w-full">
-          <button
+          <button 
             onClick={handleShare}
-            className={`flex-1 ${copied ? 'bg-green-600 hover:bg-green-500 shadow-[0_0_20px_rgba(22,163,74,0.3)]' : 'bg-slate-700 hover:bg-slate-600'} text-white rounded-2xl py-4 font-bold text-lg tracking-wide transition-all flex items-center justify-center gap-2 border border-slate-600`}
+            disabled={isSharing}
+            className="w-full sm:w-auto bg-blue-600/20 hover:bg-blue-600 border border-blue-500/50 hover:border-blue-500 text-blue-400 hover:text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.15)] group"
           >
-            {copied ? <CheckCircle2 className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-            {copied ? 'Copied!' : 'Share Results'}
+            {isSharing ? (
+              <span className="flex items-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Generating Challenge...</span>
+            ) : copied ? (
+              <span className="flex items-center gap-2 text-white"><CheckCircle2 className="w-5 h-5" /> Copied link!</span>
+            ) : (
+              <><Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" /> Copy Challenge Link</>
+            )}
           </button>
           <button
             onClick={() => { sfx.playClick(); onRestart(); }}

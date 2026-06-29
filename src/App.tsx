@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { usePoseDetection } from './hooks/usePoseDetection';
+import { useVoiceCommand } from './hooks/useVoiceCommand';
 import { exerciseLogic } from './lib/exerciseRules';
 import { sfx } from './lib/sounds';
+import { loadGhostChallenge, type GhostData } from './lib/ghostChallenges';
 import type { ExerciseType, RepState, PushupState } from './lib/exerciseRules';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './App.css';
@@ -15,6 +17,7 @@ const SessionSummary = React.lazy(() => import('./components/SessionSummary').th
 const AuthScreen = React.lazy(() => import('./components/AuthScreen').then(m => ({ default: m.AuthScreen })));
 const UserProfile = React.lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
 const ExerciseGuide = React.lazy(() => import('./components/ExerciseGuide').then(m => ({ default: m.ExerciseGuide })));
+const ARAvatar = React.lazy(() => import('./components/ARAvatar').then(m => ({ default: m.ARAvatar })));
 
 // Loading Skeleton
 const FullScreenLoader = () => (
@@ -34,6 +37,7 @@ function App() {
   const [exercise, setExercise] = useState<ExerciseType>('squat');
   const [goal, setGoal] = useState<number | null>(null);
   const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
+  const [ghostData, setGhostData] = useState<GhostData | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -64,9 +68,14 @@ function App() {
   const [formScore, setFormScore] = useState(100);
   const [startTime, setStartTime] = useState<number>(0);
   const [workoutDuration, setWorkoutDuration] = useState<number>(0);
+  const [power, setPower] = useState(0);
 
   // Guard ref to prevent goal-completion firing multiple times
   const goalReachedRef = useRef(false);
+  const frameBufferRef = useRef<string[]>([]);
+  const frameCounterRef = useRef<number>(0);
+  const repTimestampsRef = useRef<number[]>([]);
+  const [bestRepFrames, setBestRepFrames] = useState<string[]>([]);
 
   const {
     isLoaded,
@@ -82,15 +91,26 @@ function App() {
     error: cameraError,
   } = usePoseDetection();
 
-  const handleStartWorkout = async (selectedExercise: ExerciseType, selectedGoal: number | null) => {
+  const [voiceControlEnabled, setVoiceControlEnabled] = useState(false);
+  const { command, isListening } = useVoiceCommand(
+    voiceControlEnabled && (appState === 'selecting' || appState === 'workout')
+  );
+
+  const handleStartWorkout = async (selectedExercise: ExerciseType, selectedGoal: number | null, challenge?: GhostData) => {
     setExercise(selectedExercise);
     setGoal(selectedGoal);
+    if (challenge) setGhostData(challenge);
+    else setGhostData(null);
     exerciseLogic.reset();
     goalReachedRef.current = false;
     setRepCount(0);
     setExerciseState(selectedExercise === 'pushup' ? 'up' : selectedExercise === 'plank' ? 'resting' : 'standing');
     setErrors([]);
     setFormScore(100);
+    setBestRepFrames([]);
+    frameBufferRef.current = [];
+    frameCounterRef.current = 0;
+    repTimestampsRef.current = [];
     setAppState('workout');
     setStartTime(Date.now());
     setWorkoutDuration(0);
@@ -107,6 +127,32 @@ function App() {
     setWorkoutDuration(Math.round((Date.now() - startTime) / 1000));
     setAppState('summary');
   };
+
+  useEffect(() => {
+    if (!command) return;
+    
+    if (appState === 'selecting') {
+      if (command === 'start_squats') handleStartWorkout('squat', null);
+      if (command === 'start_pushups') handleStartWorkout('pushup', null);
+      if (command === 'start_plank') handleStartWorkout('plank', null);
+      if (command === 'start_jumping_jacks') handleStartWorkout('jumping_jack', null);
+    } else if (appState === 'workout') {
+      if (command === 'finish_workout') handleEndSession();
+    }
+  }, [command, appState]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const challengeId = urlParams.get('challenge');
+    if (challengeId && appState === 'selecting') {
+      loadGhostChallenge(challengeId).then(data => {
+        if (data && confirm(`Race against ${data.creatorName}'s ghost doing ${data.goal} reps?`)) {
+          handleStartWorkout(data.exercise as ExerciseType, data.goal, data);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
+    }
+  }, [appState]);
 
   // Main pose processing loop — runs on every landmark update (~25fps)
   useEffect(() => {
@@ -130,6 +176,39 @@ function App() {
     const currentReps = exerciseLogic.getRepCount();
     setRepCount(currentReps);
     setFormScore(exerciseLogic.getFormScore());
+
+    if (currentReps > repTimestampsRef.current.length) {
+      repTimestampsRef.current.push(Date.now() - startTime);
+    }
+    
+    const results = exerciseLogic.getResults();
+    if (results.length > 0) {
+      setPower(results[results.length - 1].power || 0);
+    }
+
+    // Capture frame for replay buffer (~8 fps)
+    frameCounterRef.current++;
+    if (frameCounterRef.current % 3 === 0 && canvasRef.current) {
+      try {
+        const frame = canvasRef.current.toDataURL('image/jpeg', 0.4);
+        frameBufferRef.current.push(frame);
+        if (frameBufferRef.current.length > 20) {
+          frameBufferRef.current.shift();
+        }
+      } catch (e) {
+        // ignore tainted canvas issues
+      }
+    }
+
+    // Save perfect rep
+    if (result.currentRep) {
+      const rep = result.currentRep as any;
+      if (rep.goodForm) {
+        if (bestRepFrames.length === 0 || rep.power > 150) {
+          setBestRepFrames([...frameBufferRef.current]);
+        }
+      }
+    }
 
     // Goal completion — guarded against re-entry
     if (goal !== null && currentReps >= goal && !goalReachedRef.current) {
@@ -231,6 +310,9 @@ function App() {
               userId={userId}
               isGuest={isGuest}
               username={username}
+              isListening={isListening}
+              voiceControlEnabled={voiceControlEnabled}
+              onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
               onSelect={(ex, selectedGoal) => {
                 setExercise(ex);
                 setGoal(selectedGoal);
@@ -252,6 +334,8 @@ function App() {
                 onToggleCamera={toggleCamera}
               />
               
+              <ARAvatar landmarks={landmarks} />
+
               <WorkoutHUD
                 exercise={exercise}
                 repCount={repCount}
@@ -261,6 +345,11 @@ function App() {
                 poseConfidence={poseConfidence}
                 streak={exerciseLogic.getCurrentStreak()}
                 goal={goal}
+                power={power}
+                ghostData={ghostData}
+                startTime={startTime}
+                voiceControlEnabled={voiceControlEnabled}
+                onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
                 onEndSession={handleEndSession}
               />
             </div>
@@ -274,6 +363,8 @@ function App() {
               results={exerciseLogic.getResults()}
               exercise={exercise}
               durationSeconds={workoutDuration}
+              bestRepFrames={bestRepFrames}
+              repTimestamps={repTimestampsRef.current}
               onRestart={() => setAppState('selecting')}
             />
           )}
@@ -303,7 +394,7 @@ function App() {
                       <p><strong>1. Data Collection:</strong> We collect basic account information via Firebase Authentication (email, name, profile picture) and workout statistics to provide you with your fitness dashboard.</p>
                       <p><strong>2. Local Processing:</strong> All AI pose detection and camera feeds are processed locally in your browser. Video feeds are never recorded or sent to any server.</p>
                       <p><strong>3. Data Sharing:</strong> We do not sell or share your personal data with any third parties.</p>
-                      <p><strong>4. Contact:</strong> For privacy inquiries, please contact privacy@repcoach.example.com.</p>
+                      <p><strong>4. Contact:</strong> For privacy inquiries, please contact gamerboyadarsh@gmail.com.</p>
                     </>
                   ) : (
                     <>

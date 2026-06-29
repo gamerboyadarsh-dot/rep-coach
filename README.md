@@ -41,7 +41,14 @@ Front/rear camera switching uses actual device enumeration (`enumerateDevices`) 
 **Gamification & Social Sharing**
 - **XP & Leveling System:** Earn XP based on your form score and rep volume to rank up from Rookie all the way to Elite Athlete.
 - **Wordle-style Sharing:** One-click copy your emoji-filled workout results to share on social media and challenge your friends.
+- **Instant Highlight Replay:** Records a rolling 20-frame buffer while you train and captures a 2.5-second animated replay of your best, highest-power rep to share online.
 - Unlockable achievement badges, daily streak tracking, confetti celebrations on milestones, and haptic feedback (`navigator.vibrate`) on supported devices.
+
+**Viral Multi-Player & Immersion**
+- **Ghost Challenge Mode:** Async multiplayer racing! Your rep timestamps are saved to the cloud when you share a challenge link. When a friend opens it, a purple Ghost progress bar races them in real-time based on your exact pace.
+- **True 3D AR Avatar:** Mixed reality visualization uses `three.js` to map your live MediaPipe landmarks to a glowing 3D holographic avatar that mirrors your exact movements.
+- **Velocity & Power Physics Engine:** Measures the concentric phase of every rep in milliseconds to calculate explosive power output (Watts). Shows a fiery "EXPLOSIVE" multiplier combo when you generate high power with good form!
+- **Hands-Free Voice Control:** Uses the native Web Speech API to let you start exercises (e.g. "Start Squats") and end sessions ("Finish") completely hands-free, with an on/off toggle for the mic.
 
 **Exercise Databank**
 Each exercise has a realistic reference photo, step-by-step form instructions, and an interactive front/back muscle-engagement diagram that highlights which muscles you've been working, color-coded by how often you've trained them.
@@ -59,6 +66,7 @@ Configured as an installable Progressive Web App with offline-capable caching.
 - **Frontend:** React 19 + TypeScript + Vite
 - **Styling:** Tailwind CSS v4 + custom CSS (glassmorphism, glow effects, animations)
 - **Computer Vision:** `@mediapipe/tasks-vision` (`PoseLandmarker`, GPU delegate)
+- **3D Rendering & AR:** `three`, `@react-three/fiber`, `@react-three/drei`
 - **Auth & Data:** Firebase Authentication (Google + GitHub providers) and Cloud Firestore, with a no-signup Guest Mode backed by `localStorage`
 - **Muscle Visualization:** `react-body-highlighter`
 - **Animation:** `framer-motion`, `canvas-confetti`

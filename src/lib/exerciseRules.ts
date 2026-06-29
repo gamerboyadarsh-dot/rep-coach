@@ -12,6 +12,8 @@ export interface RepResult {
   errors: string[];
   bottomAngle?: number;
   streak: number;
+  power?: number;
+  durationMs?: number;
 }
 
 // Landmark indices from MediaPipe Pose
@@ -47,6 +49,7 @@ class ExerciseLogic {
   private lastBottomAngle = 0;
   private currentStreak = 0;
   private repResults: RepResult[] = [];
+  private lastConcentricStartTime = 0;
 
   // Plank specifics
   private plankAccumulatedMs = 0;
@@ -84,21 +87,33 @@ class ExerciseLogic {
     return prev * (1 - EMA_ALPHA) + next * EMA_ALPHA;
   }
 
-  private addRepResult(exercise: ExerciseType, goodForm: boolean, errors: string[], bottomAngle?: number) {
+  private addRepResult(exercise: ExerciseType, goodForm: boolean, errors: string[], bottomAngle?: number, durationMs?: number): RepResult {
     this.repCount++;
     if (goodForm) {
       this.currentStreak++;
     } else {
       this.currentStreak = 0;
     }
+
+    let power = 0;
+    if (durationMs && durationMs > 0 && goodForm) {
+      // Very basic power calculation: "Explosiveness" factor. 
+      // A typical fast rep concentric phase takes ~500ms. 
+      // So 1000 / durationMs * 100 yields a score.
+      power = Math.round((1000 / durationMs) * 100);
+    }
+
     const result: RepResult = {
       repNumber: this.repCount,
       exercise,
       goodForm,
-      errors,
+      errors: [...errors],
       bottomAngle,
       streak: this.currentStreak,
+      power,
+      durationMs
     };
+    
     this.repResults.push(result);
     return result;
   }
@@ -179,6 +194,7 @@ class ExerciseLogic {
         }
         if (angle < DEPTH_THRESHOLD - 12) {
           this.currentState = 'ascending';
+          this.lastConcentricStartTime = Date.now();
         }
         break;
 
@@ -187,8 +203,9 @@ class ExerciseLogic {
           if (this.bottomAngleReached < MIN_DEPTH_THRESHOLD) {
             errors.push('shallow_squat');
           }
+          const durationMs = Date.now() - this.lastConcentricStartTime;
           const goodForm = errors.length === 0;
-          const repResult = this.addRepResult('squat', goodForm, errors, this.lastBottomAngle);
+          const repResult = this.addRepResult('squat', goodForm, errors, this.lastBottomAngle, durationMs);
           this.currentErrors = errors;
           this.currentState = 'standing';
           return { state: 'standing', errors, currentRep: repResult };
@@ -274,8 +291,9 @@ class ExerciseLogic {
           this.bottomAngleReached = elbowAngle;
           this.lastBottomAngle = elbowAngle;
         }
-        if (elbowAngle > BENT_ANGLE + 12) {
+        if (elbowAngle > BENT_ANGLE + 15) {
           this.currentPushupState = 'ascending';
+          this.lastConcentricStartTime = Date.now();
         }
         break;
 
@@ -284,8 +302,9 @@ class ExerciseLogic {
           if (this.bottomAngleReached > BENT_ANGLE + 20) {
             errors.push('partial_rep');
           }
+          const durationMs = Date.now() - this.lastConcentricStartTime;
           const goodForm = errors.length === 0;
-          const repResult = this.addRepResult('pushup', goodForm, errors, this.lastBottomAngle);
+          const repResult = this.addRepResult('pushup', goodForm, errors, this.lastBottomAngle, durationMs);
           this.currentErrors = errors;
           this.currentPushupState = 'up';
           return { state: 'up', errors, currentRep: repResult };
@@ -304,45 +323,35 @@ class ExerciseLogic {
     const rightShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER];
     const leftAnkle = landmarks[LANDMARKS.LEFT_ANKLE];
     const rightAnkle = landmarks[LANDMARKS.RIGHT_ANKLE];
-    const leftHip = landmarks[LANDMARKS.LEFT_HIP];
-    const rightHip = landmarks[LANDMARKS.RIGHT_HIP];
 
     // Check visibility
     const shoulderVis = Math.min(leftShoulder?.visibility ?? 1, rightShoulder?.visibility ?? 1) > MIN_VISIBILITY;
-    const wristVis = Math.min(leftWrist?.visibility ?? 0, rightWrist?.visibility ?? 0) > MIN_VISIBILITY;
     const ankleVis = Math.min(leftAnkle?.visibility ?? 0, rightAnkle?.visibility ?? 0) > MIN_VISIBILITY;
 
     if (!shoulderVis) {
       return { state: this.currentState, errors: [] };
     }
 
-    // Arms up: wrists above shoulders (with tolerance)
-    const armsUp = wristVis
-      ? leftWrist.y < leftShoulder.y + 0.05 && rightWrist.y < rightShoulder.y + 0.05
-      : false;
-
-    // Legs out: ankle spread relative to hip width
-    let legsOut = false;
-    if (ankleVis) {
-      const ankleSpread = Math.abs(rightAnkle.x - leftAnkle.x);
-      const hipSpread = Math.abs((rightHip?.x ?? 0.5) - (leftHip?.x ?? 0.5));
-      legsOut = hipSpread > 0.01 ? ankleSpread / hipSpread > 1.3 : ankleSpread > 0.25;
-    }
+    const armAngle = angleBetween(getPoint(leftShoulder), getPoint(leftWrist), getPoint(rightWrist));
+    const legSpread = ankleVis ? Math.abs(rightAnkle.x - leftAnkle.x) : 0;
 
     const errors: string[] = [];
 
     switch (this.currentState) {
       case 'standing':
       case 'in':
-        if (armsUp && legsOut) {
+        if (armAngle > 130 && legSpread > 0.4) {
           this.currentState = 'out';
+          this.lastConcentricStartTime = Date.now();
         }
         break;
 
       case 'out':
-        if (!armsUp && !legsOut) {
+        if (armAngle < 45 && legSpread < 0.2) {
+          const durationMs = Date.now() - this.lastConcentricStartTime;
           const goodForm = errors.length === 0;
-          const repResult = this.addRepResult('jumping_jack', goodForm, errors);
+          const repResult = this.addRepResult('jumping_jack', goodForm, errors, undefined, durationMs);
+          this.currentErrors = errors;
           this.currentState = 'in';
           return { state: 'in', errors, currentRep: repResult };
         }

@@ -3,7 +3,7 @@ import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import type { PoseLandmarkerResult } from '@mediapipe/tasks-vision';
 import { angleBetween, getPoint } from '../lib/angles';
 
-export type PoseLandmark = { x: number; y: number; visibility: number };
+export type PoseLandmark = { x: number; y: number; z: number; visibility: number };
 
 export interface UsePoseDetectionReturn {
   isLoaded: boolean;
@@ -183,6 +183,7 @@ export function usePoseDetection(): UsePoseDetectionReturn {
       const points: PoseLandmark[] = rawLandmarks.map(l => ({
         x: l.x,
         y: l.y,
+        z: l.z || 0,
         visibility: l.visibility ?? 1,
       }));
 

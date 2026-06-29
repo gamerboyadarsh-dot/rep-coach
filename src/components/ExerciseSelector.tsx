@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
 import { loadStats, getRankFromXP, type WorkoutSession, type PersonalRecords } from '../lib/achievements';
-import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield } from 'lucide-react';
+import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
 
 interface Props {
@@ -11,6 +11,9 @@ interface Props {
   username: string;
   onSelect: (exercise: ExerciseType, goal: number | null) => void;
   onPhotoUpdate?: (photo: string) => void;
+  isListening?: boolean;
+  voiceControlEnabled?: boolean;
+  onToggleVoiceControl?: () => void;
 }
 
 function formatDuration(sec: number) {
@@ -19,7 +22,7 @@ function formatDuration(sec: number) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoUpdate }: Props) {
+export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoUpdate, isListening = false, voiceControlEnabled = false, onToggleVoiceControl }: Props) {
   const [lifetimeReps, setLifetimeReps] = useState(0);
   const [streak, setStreak] = useState(0);
   const [goal, setGoal] = useState<number | null>(null);
@@ -95,7 +98,37 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoU
               {getRankFromXP(xp).icon} {getRankFromXP(xp).name}
             </div>
           </div>
-          <p className="text-slate-400 font-medium text-lg">Ready to crush your goals today?</p>
+          <div className="flex items-center justify-center md:justify-start gap-3 mt-1">
+            <p className="text-slate-400 font-medium text-lg">
+              Ready to crush your goals today?
+            </p>
+            {onToggleVoiceControl && (
+              <button
+                onClick={() => { sfx.playClick(); onToggleVoiceControl(); }}
+                className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  voiceControlEnabled 
+                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' 
+                    : 'bg-slate-700/50 border-slate-600 text-slate-400 hover:bg-slate-700 hover:text-white'
+                }`}
+              >
+                {voiceControlEnabled ? (
+                  <>
+                    <Mic className="w-3.5 h-3.5" />
+                    {isListening ? (
+                      <span className="flex items-center gap-1.5 animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> Listening...
+                      </span>
+                    ) : 'Voice Active'}
+                  </>
+                ) : (
+                  <>
+                    <MicOff className="w-3.5 h-3.5" />
+                    Voice Off
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
         
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">

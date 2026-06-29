@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { ExerciseType, RepState, PushupState } from '../lib/exerciseRules';
 import { FormFeedback } from './FormFeedback';
 import { sfx } from '../lib/sounds';
-import { Target, Activity, Flame, XOctagon, CheckCircle2, Volume2, VolumeX } from 'lucide-react';
+import { Target, Activity, Flame, XOctagon, CheckCircle2, Volume2, VolumeX, Ghost, Mic, MicOff } from 'lucide-react';
+import type { GhostData } from '../lib/ghostChallenges';
 
 interface Props {
   exercise: ExerciseType;
@@ -13,14 +14,36 @@ interface Props {
   poseConfidence: number;
   streak: number;
   goal: number | null;
+  power?: number;
+  ghostData?: GhostData | null;
+  startTime?: number;
+  voiceControlEnabled?: boolean;
+  onToggleVoiceControl?: () => void;
   onEndSession: () => void;
 }
 
-export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseConfidence, streak, goal, onEndSession }: Props) {
+export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseConfidence, streak, goal, power = 0, ghostData, startTime = 0, voiceControlEnabled = false, onToggleVoiceControl, onEndSession }: Props) {
   const [flash, setFlash] = useState(false);
   const [prevRep, setPrevRep] = useState(repCount);
   const [prevErrorKey, setPrevErrorKey] = useState('');
   const [voiceOn, setVoiceOn] = useState(() => sfx.isVoiceEnabled());
+  
+  // Ghost state
+  const [ghostRepCount, setGhostRepCount] = useState(0);
+
+  useEffect(() => {
+    if (!ghostData || !startTime) return;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      let completedReps = 0;
+      for (const time of ghostData.timestamps) {
+        if (elapsed >= time) completedReps++;
+        else break;
+      }
+      setGhostRepCount(completedReps);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [ghostData, startTime]);
 
   const toggleVoice = () => {
     const newVal = !voiceOn;
@@ -130,6 +153,17 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
         </div>
 
         <div className="flex gap-2">
+          {onToggleVoiceControl && (
+            <button
+              onClick={() => { sfx.playClick(); onToggleVoiceControl(); }}
+              className={`backdrop-blur-md border hover:bg-slate-700 rounded-2xl px-4 py-3 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center ${
+                voiceControlEnabled ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              {voiceControlEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-50" />}
+            </button>
+          )}
+
           <button
             onClick={toggleVoice}
             className="bg-slate-800/80 backdrop-blur-md border border-slate-700 hover:bg-slate-700 rounded-2xl px-4 py-3 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center text-slate-300 hover:text-white"
@@ -139,14 +173,22 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           
           <button
             onClick={() => { sfx.playClick(); onEndSession(); }}
-            className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl px-5 py-3 transition-all pointer-events-auto font-bold uppercase tracking-widest cursor-pointer text-xs md:text-sm shadow-lg self-end md:self-auto active:scale-95"
+            className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl px-5 py-3 transition-all pointer-events-auto font-bold tracking-widest cursor-pointer shadow-lg flex flex-col items-center justify-center active:scale-95"
           >
-            End Session
+            <span className="uppercase text-xs md:text-sm">End Session</span>
+            {voiceControlEnabled && <span className="text-[9px] md:text-[10px] opacity-70 mt-0.5">🎤 Say "Finish"</span>}
           </button>
         </div>
       </div>
 
-      <FormFeedback errors={errors} />
+      <div className="absolute top-28 left-4 right-4 flex justify-between items-start pointer-events-none">
+        <FormFeedback errors={errors} />
+        {power > 150 && (
+          <div className="bg-orange-500/90 text-white font-black italic tracking-tighter px-4 py-2 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.8)] animate-pulse rotate-3 text-xl border-2 border-orange-300">
+            EXPLOSIVE 🔥
+          </div>
+        )}
+      </div>
 
       {/* Bottom Panels */}
       <div className="absolute bottom-6 left-4 right-4 md:bottom-10 md:left-10 md:right-10 flex justify-between items-end pointer-events-none">
@@ -172,8 +214,16 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           </div>
 
           {goal && (
-            <div className="w-full bg-slate-800 rounded-full h-2 mt-6 overflow-hidden">
-              <div className="h-full bg-blue-500 transition-all duration-500 ease-out rounded-full" style={{ width: `${progress}%` }}></div>
+            <div className="w-full mt-6 flex flex-col gap-2">
+              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden relative">
+                <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ width: `${progress}%` }}></div>
+              </div>
+              {ghostData && (
+                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden relative flex items-center">
+                  <div className="absolute inset-y-0 left-0 bg-purple-500/80 transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(168,85,247,0.8)]" style={{ width: `${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}%` }}></div>
+                  <Ghost className="w-3 h-3 text-purple-300 absolute -mt-[14px]" style={{ left: `calc(${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}% - 6px)` }} />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -186,6 +236,14 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
               <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 drop-shadow-lg">Form Score</span>
               <span className={`text-3xl md:text-4xl font-black tabular-nums drop-shadow-lg ${scoreColor}`}>{formScore}%</span>
             </div>
+            {exercise !== 'plank' && (
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 flex items-center gap-1 drop-shadow-lg text-orange-400">
+                  <Flame className="w-3 h-3 drop-shadow-lg" /> Power
+                </span>
+                <span className={`text-xl md:text-2xl font-black tabular-nums drop-shadow-lg text-orange-300`}>{power} <span className="text-xs">W</span></span>
+              </div>
+            )}
             <div className="flex flex-col items-end">
               <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 flex items-center gap-1 drop-shadow-lg">
                 <Activity className="w-3 h-3 drop-shadow-lg" /> Confidence

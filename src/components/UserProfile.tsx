@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { sfx } from '../lib/sounds';
-import { loadStats, saveStats, type UserStats } from '../lib/achievements';
+import { loadStats, saveStats, getRankFromXP, type UserStats } from '../lib/achievements';
 import { motion } from 'framer-motion';
-import { Trophy, Activity, Flame, LogOut, Award, Star, Medal, Settings, Video, Moon, Bell, History, Camera } from 'lucide-react';
+import { Trophy, Activity, Flame, LogOut, Settings, Video, Moon, Bell, History, Camera, Mic } from 'lucide-react';
 
 interface Props {
   userId: string;
@@ -21,6 +21,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
   
   const [isLightMode, setIsLightMode] = useState(() => localStorage.getItem('repCoach_theme') === 'light');
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => localStorage.getItem('repCoach_notifications') === 'true');
+  const [coachPersonality, setCoachPersonality] = useState(() => localStorage.getItem('repCoach_personality') || 'supportive');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -175,12 +176,10 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
     }
   };
 
-  const getRank = (reps: number) => {
-    if (reps > 1000) return { title: 'Elite Athlete', icon: <Star className="w-5 h-5 text-yellow-400" /> };
-    if (reps > 500) return { title: 'Advanced', icon: <Award className="w-5 h-5 text-purple-400" /> };
-    if (reps > 100) return { title: 'Intermediate', icon: <Trophy className="w-5 h-5 text-blue-400" /> };
-    if (reps > 50) return { title: 'Beginner', icon: <Medal className="w-5 h-5 text-green-400" /> };
-    return { title: 'Rookie', icon: <Activity className="w-5 h-5 text-slate-400" /> };
+  const handlePersonalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setCoachPersonality(val);
+    localStorage.setItem('repCoach_personality', val);
   };
 
   if (isLoading || !stats) {
@@ -192,7 +191,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
   }
 
   const badgesList = Object.values(stats.badges || {});
-  const currentRank = getRank(stats.totalReps);
+  const currentRank = getRankFromXP(stats.xp || 0);
   const workoutHistory = stats.workoutHistory || [];
 
   return (
@@ -218,15 +217,15 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/40">
               <Camera className="w-8 h-8 text-white drop-shadow-lg" />
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-slate-800 p-2 rounded-full border border-slate-700 shadow-lg">
-              {currentRank.icon}
+            <div className="absolute -bottom-2 -right-2 bg-slate-800 p-2 rounded-full border border-slate-700 shadow-lg flex items-center justify-center w-10 h-10">
+              <span className="text-xl">{currentRank.icon}</span>
             </div>
           </div>
 
           <div className="text-center md:text-left flex-1">
             <h1 className="text-4xl font-black mb-2 text-white">{username}</h1>
             <div className="flex items-center justify-center md:justify-start gap-2">
-              <span className="text-blue-400 font-bold uppercase tracking-widest text-sm">{currentRank.title}</span>
+              <span className={`font-bold uppercase tracking-widest text-sm ${currentRank.color}`}>{currentRank.name}</span>
               {isGuest && <span className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded uppercase font-semibold">Guest Mode</span>}
             </div>
           </div>
@@ -361,6 +360,25 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                       </option>
                     ))
                   )}
+                </select>
+              </div>
+
+              {/* Coach Personality Picker */}
+              <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Mic className="w-5 h-5 text-pink-400" />
+                  <div>
+                    <h4 className="text-white font-bold">Coach Personality</h4>
+                    <p className="text-xs text-slate-400">Choose your AI's tone</p>
+                  </div>
+                </div>
+                <select 
+                  value={coachPersonality}
+                  onChange={handlePersonalityChange}
+                  className="bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500"
+                >
+                  <option value="supportive">Supportive Coach 🧘‍♀️</option>
+                  <option value="drill_sergeant">Drill Sergeant 🪖</option>
                 </select>
               </div>
 

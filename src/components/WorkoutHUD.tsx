@@ -36,10 +36,13 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       
       // Voice feedback every 5 reps or goal reached
       if (voiceOn) {
+        const personality = localStorage.getItem('repCoach_personality') || 'supportive';
+        const isDrill = personality === 'drill_sergeant';
+
         if (goal && repCount === goal) {
-          sfx.speakCue("Goal reached! Great job.");
+          sfx.speakCue(isDrill ? "Goal reached. Don't stop now, give me more!" : "Goal reached! Great job.");
         } else if (goal && repCount === Math.floor(goal / 2)) {
-          sfx.speakCue("Halfway there!");
+          sfx.speakCue(isDrill ? "Only halfway! Stop slacking!" : "Halfway there!");
         } else if (repCount % 5 === 0) {
           sfx.speakCue(`${repCount}`);
         }
@@ -58,8 +61,14 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
     if (errors.length > 0 && key !== prevErrorKey) {
       sfx.playError();
       if (voiceOn) {
+        const personality = localStorage.getItem('repCoach_personality') || 'supportive';
         // Just speak the first error so it doesn't ramble
-        sfx.speakCue(errors[0]);
+        const err = errors[0];
+        if (personality === 'drill_sergeant') {
+          sfx.speakCue(`Fix your form! ${err}`);
+        } else {
+          sfx.speakCue(err);
+        }
       }
     }
     setPrevErrorKey(key);

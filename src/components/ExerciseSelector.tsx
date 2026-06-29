@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
-import { loadStats, type WorkoutSession, type PersonalRecords } from '../lib/achievements';
+import { loadStats, getRankFromXP, type WorkoutSession, type PersonalRecords } from '../lib/achievements';
 import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
 
@@ -28,6 +28,7 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoU
   const [recentWorkouts, setRecentWorkouts] = useState<WorkoutSession[]>([]);
   const [prs, setPrs] = useState<PersonalRecords>({ squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
   const [totalCalories, setTotalCalories] = useState(0);
+  const [xp, setXp] = useState(0);
   const [chartData, setChartData] = useState<{day: string, reps: number, calories: number}[]>([]);
   const [chartMode, setChartMode] = useState<'reps' | 'calories'>('reps');
 
@@ -46,6 +47,7 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoU
         setRecentWorkouts(history.slice(0, 3));
         setPrs(stats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
         setTotalCalories(history.reduce((sum, w) => sum + (w.calories || 0), 0));
+        setXp(stats.xp || 0);
         
         // Build chart data (last 7 days)
         const days = 7;
@@ -87,7 +89,12 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoU
       {/* Welcome & Stats Banner */}
       <div className="w-full flex flex-col md:flex-row justify-between items-center bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-8 mb-8 shadow-2xl">
         <div className="mb-6 md:mb-0 text-center md:text-left">
-          <h1 className="text-3xl font-extrabold text-white mb-2">Welcome back, {username}</h1>
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+            <h1 className="text-3xl font-extrabold text-white">Welcome back, {username}</h1>
+            <div className={`px-2 py-1 rounded-lg border bg-slate-900 border-slate-700 flex items-center gap-1 text-xs font-bold uppercase tracking-widest ${getRankFromXP(xp).color}`}>
+              {getRankFromXP(xp).icon} {getRankFromXP(xp).name}
+            </div>
+          </div>
           <p className="text-slate-400 font-medium text-lg">Ready to crush your goals today?</p>
         </div>
         

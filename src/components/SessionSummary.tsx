@@ -4,7 +4,7 @@ import { sfx } from '../lib/sounds';
 import confetti from 'canvas-confetti';
 import { processWorkout, type Badge } from '../lib/achievements';
 import { motion } from 'framer-motion';
-import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame } from 'lucide-react';
+import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame, Share2 } from 'lucide-react';
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60);
@@ -26,6 +26,10 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>([]);
   const [sessionCalories, setSessionCalories] = useState<number>(0);
   const [isNewPR, setIsNewPR] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
+  const personality = localStorage.getItem('repCoach_personality') || 'supportive';
+  
   const totalReps = results.length;
   const goodReps = results.filter(r => r.goodForm).length;
   const formScore = totalReps === 0 ? 0 : Math.round((goodReps / totalReps) * 100);
@@ -67,9 +71,15 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
   let specificTip = "";
   
   if (totalReps === 0) {
-    aiMessage = exercise === 'plank' 
-      ? "Zero seconds recorded. Get on the floor and hold."
-      : "Zero reps recorded. Even rest days require more effort than this.";
+    if (personality === 'drill_sergeant') {
+      aiMessage = exercise === 'plank' 
+        ? "Zero seconds? Drop down and give me a real hold right now!"
+        : "Zero reps?! Did you even try? Get back up and do it again!";
+    } else {
+      aiMessage = exercise === 'plank' 
+        ? "Zero seconds recorded. Make sure you're fully aligned with the camera next time."
+        : "Zero reps recorded. Make sure your whole body is visible in the frame!";
+    }
   } else {
     // Analyze errors to provide specific tips
     const errorCounts: Record<string, number> = {};
@@ -89,38 +99,64 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     });
 
     if (formScore >= 90) {
-      aiMessage = `Outstanding execution. You burned ${sessionCalories} calories over ${formatDuration(durationSeconds)} with a stellar ${formScore}% form score`;
-      if (isNewPR) aiMessage += `, and you even hit a new personal best for reps!`;
-      else aiMessage += `. Keep pushing the limits.`;
-      
-      if (mostFrequentError) {
-        specificTip = `Near perfect. Just a slight note: try to minimize "${mostFrequentError}" on fatigue reps.`;
+      if (personality === 'drill_sergeant') {
+        aiMessage = `Acceptable execution. ${sessionCalories} calories in ${formatDuration(durationSeconds)}. Form was ${formScore}%.`;
+        if (isNewPR) aiMessage += ` A new PR. Don't let it go to your head.`;
+        else aiMessage += ` Do better next time.`;
+        if (mostFrequentError) specificTip = `Still saw "${mostFrequentError}". Fix it or I'll make you do burpees.`;
+      } else {
+        aiMessage = `Outstanding execution. You burned ${sessionCalories} calories over ${formatDuration(durationSeconds)} with a stellar ${formScore}% form score`;
+        if (isNewPR) aiMessage += `, and you even hit a new personal best!`;
+        else aiMessage += `. Keep pushing the limits.`;
+        if (mostFrequentError) specificTip = `Near perfect. Just a slight note: try to minimize "${mostFrequentError}" on fatigue reps.`;
       }
     } else if (formScore >= 60) {
-      aiMessage = `Solid effort, burning ${sessionCalories} calories in ${formatDuration(durationSeconds)} with ${formScore}% form.`;
-      if (isNewPR) aiMessage += ` You pushed hard enough to set a new personal record, but form started slipping.`;
-      else aiMessage += ` Focus on quality over quantity next time.`;
+      if (personality === 'drill_sergeant') {
+        aiMessage = `Sloppy! ${formScore}% form is a joke. You burned ${sessionCalories} calories but you're leaving gains on the table.`;
+        if (isNewPR) aiMessage += ` New PR? Doesn't count if it's garbage form.`;
+      } else {
+        aiMessage = `Solid effort, burning ${sessionCalories} calories in ${formatDuration(durationSeconds)} with ${formScore}% form.`;
+        if (isNewPR) aiMessage += ` You pushed hard enough to set a new personal record, but form started slipping.`;
+        else aiMessage += ` Focus on quality over quantity next time.`;
+      }
 
       if (mostFrequentError) {
         if (mostFrequentError.toLowerCase().includes('depth')) {
-          specificTip = "You're consistently missing depth. Drop the weight or stretch your hips to break parallel.";
+          specificTip = personality === 'drill_sergeant' ? "SQUAT DEEPER. You call that parallel?" : "You're consistently missing depth. Drop the weight or stretch your hips.";
         } else if (mostFrequentError.toLowerCase().includes('knee')) {
-          specificTip = "Your knees are unstable. Actively drive them outwards tracking over your toes.";
+          specificTip = personality === 'drill_sergeant' ? "KNEES OUT. Stop letting them cave in!" : "Your knees are unstable. Actively drive them outwards.";
         } else if (mostFrequentError.toLowerCase().includes('back') || mostFrequentError.toLowerCase().includes('chest')) {
-          specificTip = "Keep your chest up and core braced to prevent your back from rounding.";
+          specificTip = personality === 'drill_sergeant' ? "CHEST UP. Stop looking at the floor!" : "Keep your chest up and core braced.";
         } else if (mostFrequentError.toLowerCase().includes('flared')) {
-          specificTip = "Tuck your elbows to 45 degrees to protect your shoulders.";
+          specificTip = personality === 'drill_sergeant' ? "TUCK YOUR ELBOWS. You're going to destroy your rotator cuffs!" : "Tuck your elbows to 45 degrees to protect your shoulders.";
         } else {
-          specificTip = `Main issue to fix: ${mostFrequentError.replace(/_/g, ' ')}. Focus on this specific cue next time.`;
+          specificTip = `Main issue: ${mostFrequentError.replace(/_/g, ' ')}. Focus on this cue next time.`;
         }
       }
     } else {
-      aiMessage = `Critical form failure detected (${formScore}%). You spent ${formatDuration(durationSeconds)} working out, but we need to regress and focus purely on mechanics.`;
+      if (personality === 'drill_sergeant') {
+        aiMessage = `ABSOLUTE FAILURE. ${formScore}% form. Strip the weight and start from zero.`;
+      } else {
+        aiMessage = `Critical form failure detected (${formScore}%). We need to regress and focus purely on mechanics.`;
+      }
       if (mostFrequentError) {
         specificTip = `Your primary failure point is: ${mostFrequentError.replace(/_/g, ' ')}. Regress the movement until this is corrected.`;
       }
     }
   }
+
+  const handleShare = () => {
+    sfx.playClick();
+    const exName = exercise === 'plank' ? 'Plank (Hold)' : exercise.replace('_', ' ');
+    const statText = exercise === 'plank' ? `Hold Time: ${totalReps}s` : `Reps: ${totalReps}`;
+    const text = `🦾 Rep Coach | ${exName.toUpperCase()} | ${statText} | Form: ${formScore}% 🔥\nTry to beat me: https://repcoach-hackathon-live.surge.sh`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen pt-24 pb-12 px-6 relative z-10 overflow-y-auto w-full">
@@ -236,12 +272,21 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           </div>
         )}
 
-        <button
-          onClick={() => { sfx.playClick(); onRestart(); }}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-5 font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
-        >
-          Finish Workout <ArrowRight className="w-5 h-5" />
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <button
+            onClick={handleShare}
+            className={`flex-1 ${copied ? 'bg-green-600 hover:bg-green-500 shadow-[0_0_20px_rgba(22,163,74,0.3)]' : 'bg-slate-700 hover:bg-slate-600'} text-white rounded-2xl py-4 font-bold text-lg tracking-wide transition-all flex items-center justify-center gap-2 border border-slate-600`}
+          >
+            {copied ? <CheckCircle2 className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+            {copied ? 'Copied!' : 'Share Results'}
+          </button>
+          <button
+            onClick={() => { sfx.playClick(); onRestart(); }}
+            className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-4 font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
+          >
+            Finish Workout <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );

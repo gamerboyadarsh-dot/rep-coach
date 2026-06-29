@@ -37,6 +37,7 @@ export interface UserStats {
   weight?: number;
   height?: number;
   profilePicture?: string;
+  xp: number;
 }
 
 export const defaultBadges: Record<string, Badge> = {
@@ -58,13 +59,22 @@ function getLocalStats(userId: string): UserStats | null {
         personalRecords: parsed.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 },
         weight: parsed.weight,
         height: parsed.height,
-        profilePicture: parsed.profilePicture
+        profilePicture: parsed.profilePicture,
+        xp: parsed.xp || 0
       };
     }
   } catch (e) {
     console.error('Failed to load local stats', e);
   }
   return null;
+}
+
+export function getRankFromXP(xp: number): { name: string, icon: string, color: string } {
+  if (xp < 1000) return { name: 'Novice', icon: '⚪', color: 'text-slate-400' };
+  if (xp < 5000) return { name: 'Bronze', icon: '🥉', color: 'text-amber-600' };
+  if (xp < 10000) return { name: 'Silver', icon: '🥈', color: 'text-slate-300' };
+  if (xp < 25000) return { name: 'Gold', icon: '🥇', color: 'text-yellow-400' };
+  return { name: 'Elite', icon: '💎', color: 'text-cyan-400' };
 }
 
 function saveLocalStats(userId: string, stats: UserStats) {
@@ -84,7 +94,8 @@ export async function loadStats(userId: string, isGuest: boolean): Promise<UserS
     lastWorkoutDate: null,
     badges: { ...defaultBadges },
     workoutHistory: [],
-    personalRecords: { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 }
+    personalRecords: { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 },
+    xp: 0
   };
 
   const localStats = getLocalStats(userId) || defaultStats;
@@ -170,6 +181,11 @@ export async function processWorkout(
 
   // Add to history and sort (keep last 50)
   stats.workoutHistory = [session, ...stats.workoutHistory].slice(0, 50);
+
+  // Determine XP
+  let newXp = Math.floor(reps * 10);
+  if (formScore === 100) newXp = Math.floor(newXp * 1.5);
+  stats.xp = (stats.xp || 0) + newXp;
 
   // Update PRs
   let isNewPR = false;

@@ -63,8 +63,8 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
         <div className="flex gap-3 flex-wrap">
           
           <div className={`flex flex-col justify-center bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-4 py-2 pointer-events-auto transition-all ${isCombo ? 'shadow-[0_0_20px_rgba(249,115,22,0.3)] border-orange-500/50 scale-105' : 'shadow-lg'}`}>
-            <div className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Program</div>
-            <div className="text-sm md:text-base font-bold text-white uppercase tracking-wide">
+            <div className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Program</div>
+            <div className="text-sm md:text-base font-black text-white uppercase tracking-wide drop-shadow-md">
               {exercise.replaceAll('_', ' ')}
             </div>
           </div>
@@ -76,8 +76,8 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
               <XOctagon className="w-5 h-5 text-red-400" />
             )}
             <div className="flex flex-col">
-              <div className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Form</div>
-              <div className={`text-sm md:text-base font-bold uppercase tracking-wide ${hasGoodForm ? 'text-blue-400' : 'text-red-400'}`}>
+              <div className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Form</div>
+              <div className={`text-sm md:text-base font-black uppercase tracking-wide drop-shadow-md ${hasGoodForm ? 'text-blue-400' : 'text-red-400'}`}>
                 {hasGoodForm ? 'Optimal' : 'Check Form'}
               </div>
             </div>
@@ -87,8 +87,8 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
             <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl px-4 py-2 pointer-events-auto shadow-lg">
               <Flame className="w-5 h-5 text-orange-400 animate-pulse" />
               <div className="flex flex-col">
-                <div className="text-[10px] md:text-xs text-orange-400/80 uppercase tracking-widest font-semibold mb-0.5">Combo</div>
-                <div className="text-sm md:text-base font-bold text-orange-400 uppercase tracking-wide">{streak}x Multiplier</div>
+                <div className="text-[10px] md:text-xs text-orange-400/80 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Combo</div>
+                <div className="text-sm md:text-base font-black text-orange-400 uppercase tracking-wide drop-shadow-md">{streak}x Multiplier</div>
               </div>
             </div>
           )}
@@ -110,16 +110,16 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
         {/* Rep Counter */}
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 min-w-[140px] md:min-w-[220px] shadow-2xl flex flex-col items-center pointer-events-auto">
           <div className="flex items-center justify-center gap-2 mb-2 w-full">
-            <Target className="w-5 h-5 text-blue-400" />
-            <span className="text-xs md:text-sm text-slate-400 uppercase tracking-widest font-semibold">Rep Count</span>
+            <Target className="w-5 h-5 text-blue-400 drop-shadow-lg" />
+            <span className="text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">Rep Count</span>
           </div>
 
           <div className="flex items-baseline justify-center gap-2 w-full">
-            <div className={`text-6xl md:text-8xl font-black tabular-nums tracking-tighter ${flash ? 'text-white scale-110 drop-shadow-[0_0_20px_rgba(59,130,246,0.8)]' : 'text-slate-100'} transition-all duration-200`}>
+            <div className={`text-7xl md:text-9xl font-black tabular-nums tracking-tighter drop-shadow-xl ${flash ? 'text-white scale-110 drop-shadow-[0_0_30px_rgba(59,130,246,1)]' : 'text-slate-100'} transition-all duration-200`}>
               {repCount}
             </div>
             {goal && (
-              <div className="text-2xl md:text-4xl font-bold text-slate-500">
+              <div className="text-3xl md:text-5xl font-black text-slate-400 drop-shadow-lg">
                 / {goal}
               </div>
             )}
@@ -137,21 +137,21 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           
           <div className="flex justify-between items-end w-full">
             <div className="flex flex-col">
-              <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-semibold mb-1">Form Score</span>
-              <span className={`text-2xl md:text-3xl font-black tabular-nums ${scoreColor}`}>{formScore}%</span>
+              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 drop-shadow-lg">Form Score</span>
+              <span className={`text-3xl md:text-4xl font-black tabular-nums drop-shadow-lg ${scoreColor}`}>{formScore}%</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-semibold mb-1 flex items-center gap-1">
-                <Activity className="w-3 h-3" /> Confidence
+              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 flex items-center gap-1 drop-shadow-lg">
+                <Activity className="w-3 h-3 drop-shadow-lg" /> Confidence
               </span>
-              <span className={`text-lg md:text-xl font-bold tabular-nums ${confidenceColor}`}>{poseConfidence}%</span>
+              <span className={`text-xl md:text-2xl font-black tabular-nums drop-shadow-lg ${confidenceColor}`}>{poseConfidence}%</span>
             </div>
           </div>
 
           <div className="w-full">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-semibold">Stage</span>
-              <span className="text-xs md:text-sm font-bold text-blue-400 tracking-wide uppercase">{state}</span>
+              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">Stage</span>
+              <span className="text-xs md:text-sm font-black text-blue-400 tracking-wide uppercase drop-shadow-lg">{state}</span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-1.5 md:h-2 overflow-hidden">
               <div

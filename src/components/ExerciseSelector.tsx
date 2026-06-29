@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
 import { loadStats, type WorkoutSession, type PersonalRecords } from '../lib/achievements';
-import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap } from 'lucide-react';
+import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   isGuest: boolean;
   username: string;
   onSelect: (exercise: ExerciseType, goal: number | null) => void;
+  onPhotoUpdate?: (photo: string) => void;
 }
 
 function formatDuration(sec: number) {
@@ -18,14 +19,14 @@ function formatDuration(sec: number) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props) {
+export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoUpdate }: Props) {
   const [lifetimeReps, setLifetimeReps] = useState(0);
   const [streak, setStreak] = useState(0);
   const [goal, setGoal] = useState<number | null>(null);
   
   // Dashboard Specific State
   const [recentWorkouts, setRecentWorkouts] = useState<WorkoutSession[]>([]);
-  const [prs, setPrs] = useState<PersonalRecords>({ squat: 0, pushup: 0, jumping_jack: 0 });
+  const [prs, setPrs] = useState<PersonalRecords>({ squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
   const [totalCalories, setTotalCalories] = useState(0);
   const [chartData, setChartData] = useState<{day: string, reps: number, calories: number}[]>([]);
   const [chartMode, setChartMode] = useState<'reps' | 'calories'>('reps');
@@ -37,10 +38,13 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
         const stats = await loadStats(userId, isGuest);
         setLifetimeReps(stats.totalReps || 0);
         setStreak(stats.currentDailyStreak || 0);
+        if (stats.profilePicture && onPhotoUpdate) {
+          onPhotoUpdate(stats.profilePicture);
+        }
         
         const history = stats.workoutHistory || [];
         setRecentWorkouts(history.slice(0, 3));
-        setPrs(stats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 });
+        setPrs(stats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
         setTotalCalories(history.reduce((sum, w) => sum + (w.calories || 0), 0));
         
         // Build chart data (last 7 days)
@@ -172,7 +176,7 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
           </div>
 
           {/* Start Exercises Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
             <button
               onClick={() => handleSelect('squat')}
               className="flex flex-col items-center bg-gradient-to-b from-slate-800/80 to-slate-900/80 border border-slate-700 hover:border-blue-500/50 p-6 rounded-3xl text-center transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(59,130,246,0.15)] group relative overflow-hidden"
@@ -214,6 +218,20 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
               <h2 className="text-xl font-bold mb-1 text-white">Jacks</h2>
               <div className="text-xs font-semibold text-slate-500 bg-slate-800 px-2 py-1 rounded-md">PR: {prs.jumping_jack}</div>
             </button>
+
+            <button
+              onClick={() => handleSelect('plank')}
+              className="flex flex-col items-center bg-gradient-to-b from-slate-800/80 to-slate-900/80 border border-slate-700 hover:border-emerald-500/50 p-6 rounded-3xl text-center transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(16,185,129,0.15)] group relative overflow-hidden"
+            >
+              {recentWorkouts[0]?.exercise === 'plank' && (
+                <div className="absolute top-0 right-0 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-bl-lg">LAST PLAYED</div>
+              )}
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors">
+                <Shield className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h2 className="text-xl font-bold mb-1 text-white">Plank</h2>
+              <div className="text-xs font-semibold text-slate-500 bg-slate-800 px-2 py-1 rounded-md">PR: {prs.plank}s</div>
+            </button>
           </div>
           
           {/* Heatmap */}
@@ -254,7 +272,9 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
                     <div className="flex gap-3 text-right">
                       <div className="flex flex-col items-end">
                         <span className="text-white font-bold leading-none">{w.reps}</span>
-                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Reps</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                          {w.exercise === 'plank' ? 'Hold (s)' : 'Reps'}
+                        </span>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className={`font-bold leading-none ${w.formScore >= 80 ? 'text-blue-400' : w.formScore >= 50 ? 'text-orange-400' : 'text-red-400'}`}>{w.formScore}%</span>

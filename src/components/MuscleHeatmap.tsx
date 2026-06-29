@@ -12,11 +12,13 @@ export function MuscleHeatmap({ history }: Props) {
     let squatFreq = 0;
     let pushupFreq = 0;
     let jumpingJackFreq = 0;
+    let plankFreq = 0;
 
     history.forEach((session) => {
       if (session.exercise === 'squat') squatFreq += session.reps;
       else if (session.exercise === 'pushup') pushupFreq += session.reps;
-      else if (session.exercise === 'jumping-jack') jumpingJackFreq += session.reps;
+      else if (session.exercise === 'jumping_jack' || session.exercise === 'jumping-jack') jumpingJackFreq += session.reps;
+      else if (session.exercise === 'plank') plankFreq += session.reps;
     });
 
     const data: IExerciseData[] = [];
@@ -42,6 +44,14 @@ export function MuscleHeatmap({ history }: Props) {
         name: 'Jumping Jack',
         muscles: ['calves', 'quadriceps', 'front-deltoids'] as Muscle[],
         frequency: jumpingJackFreq
+      });
+    }
+
+    if (plankFreq > 0) {
+      data.push({
+        name: 'Plank',
+        muscles: ['abs', 'obliques', 'lower-back', 'front-deltoids'] as Muscle[],
+        frequency: plankFreq
       });
     }
 

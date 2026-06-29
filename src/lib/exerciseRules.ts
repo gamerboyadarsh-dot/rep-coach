@@ -1,8 +1,8 @@
 import { angleBetween, angleToVertical, getPoint } from './angles';
 
-export type ExerciseType = 'squat' | 'pushup' | 'jumping_jack';
+export type ExerciseType = 'squat' | 'pushup' | 'jumping_jack' | 'plank';
 
-export type RepState = 'standing' | 'descending' | 'bottom' | 'ascending' | 'out' | 'in';
+export type RepState = 'standing' | 'descending' | 'bottom' | 'ascending' | 'out' | 'in' | 'planking' | 'resting';
 export type PushupState = 'up' | 'descending' | 'bottom' | 'ascending';
 
 export interface RepResult {
@@ -45,13 +45,18 @@ class ExerciseLogic {
   private currentErrors: string[] = [];
   private bottomAngleReached = 0;
   private lastBottomAngle = 0;
-  private repResults: RepResult[] = [];
   private currentStreak = 0;
+  private repResults: RepResult[] = [];
+
+  // Plank specifics
+  private plankAccumulatedMs = 0;
+  private lastPlankTime = 0;
 
   // EMA state for angle smoothing
   private smoothedSquatAngle: number | null = null;
   private smoothedLeftElbowAngle: number | null = null;
   private smoothedRightElbowAngle: number | null = null;
+  private smoothedHipAngle: number | null = null;
 
   reset() {
     this.repCount = 0;
@@ -62,9 +67,12 @@ class ExerciseLogic {
     this.lastBottomAngle = 0;
     this.repResults = [];
     this.currentStreak = 0;
+    this.plankAccumulatedMs = 0;
+    this.lastPlankTime = 0;
     this.smoothedSquatAngle = null;
     this.smoothedLeftElbowAngle = null;
     this.smoothedRightElbowAngle = null;
+    this.smoothedHipAngle = null;
   }
 
   getResults(): RepResult[] {
@@ -339,6 +347,107 @@ class ExerciseLogic {
           return { state: 'in', errors, currentRep: repResult };
         }
         break;
+    }
+
+    return { state: this.currentState, errors: [...errors] };
+  }
+
+  // ==================== PLANK LOGIC ====================
+  processPlankFrame(landmarks: Landmark[]): { state: RepState; errors: string[]; currentRep?: RepResult } {
+    const leftShoulder = landmarks[LANDMARKS.LEFT_SHOULDER];
+    const rightShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER];
+    const leftHip = landmarks[LANDMARKS.LEFT_HIP];
+    const rightHip = landmarks[LANDMARKS.RIGHT_HIP];
+    const leftAnkle = landmarks[LANDMARKS.LEFT_ANKLE];
+    const rightAnkle = landmarks[LANDMARKS.RIGHT_ANKLE];
+
+    const leftVis = Math.min(leftShoulder?.visibility ?? 0, leftHip?.visibility ?? 0, leftAnkle?.visibility ?? 0);
+    const rightVis = Math.min(rightShoulder?.visibility ?? 0, rightHip?.visibility ?? 0, rightAnkle?.visibility ?? 0);
+
+    const useLeft = leftVis > MIN_VISIBILITY;
+    const useRight = rightVis > MIN_VISIBILITY;
+
+    const now = Date.now();
+    if (!this.lastPlankTime) this.lastPlankTime = now;
+    const deltaMs = now - this.lastPlankTime;
+    this.lastPlankTime = now;
+
+    if (!useLeft && !useRight) {
+      this.currentState = 'resting';
+      return { state: 'resting', errors: [] };
+    }
+
+    let rawHipAngle: number;
+    if (useLeft && useRight) {
+      const leftA = angleBetween(getPoint(leftShoulder), getPoint(leftHip), getPoint(leftAnkle));
+      const rightA = angleBetween(getPoint(rightShoulder), getPoint(rightHip), getPoint(rightAnkle));
+      rawHipAngle = (leftA * leftVis + rightA * rightVis) / (leftVis + rightVis);
+    } else if (useLeft) {
+      rawHipAngle = angleBetween(getPoint(leftShoulder), getPoint(leftHip), getPoint(leftAnkle));
+    } else {
+      rawHipAngle = angleBetween(getPoint(rightShoulder), getPoint(rightHip), getPoint(rightAnkle));
+    }
+
+    this.smoothedHipAngle = this.smooth(this.smoothedHipAngle, rawHipAngle);
+    const hipAngle = this.smoothedHipAngle;
+
+    // A perfect plank has a hip angle of ~180 degrees.
+    // > 180 means sagging hips (hips closer to ground).
+    // < 180 means piked hips (hips too high).
+    // Let's use 160-190 as a generous "plank" threshold, but penalize form within it.
+    
+    // In our coordinate system (y goes down):
+    // If the person is facing the camera, or side profile, angle is calculated 0-180 usually.
+    // Let's use angleBetween which returns 0-180.
+    // 180 = straight line.
+    // We will consider > 155 degrees as a "plank" posture.
+    
+    const errors: string[] = [];
+    let isGoodForm = true;
+
+    // Wait, let's determine if it's sagging or piked.
+    // We can just rely on the angle: < 165 = piked hips.
+    // Sagging hips might actually increase the angle closer to 180 or beyond if the math allows,
+    // but since angleBetween is 0-180, both sagging and piked might reduce the angle from 180.
+    // To distinguish, we need to know which way the angle breaks (y coordinate of hip).
+    // Simplest: if hip.y > (shoulder.y + ankle.y) / 2 -> sagging (y is down)
+    // if hip.y < (shoulder.y + ankle.y) / 2 -> piked
+    
+    const activeHip = useLeft ? leftHip : rightHip;
+    const activeShoulder = useLeft ? leftShoulder : rightShoulder;
+    const activeAnkle = useLeft ? leftAnkle : rightAnkle;
+    
+    const expectedHipY = (activeShoulder.y + activeAnkle.y) / 2;
+
+    if (hipAngle > 150) {
+      this.currentState = 'planking';
+      this.plankAccumulatedMs += deltaMs;
+      
+      // Update repCount to be the number of seconds held
+      const newRepCount = Math.floor(this.plankAccumulatedMs / 1000);
+      
+      if (hipAngle < 165) {
+        isGoodForm = false;
+        if (activeHip.y > expectedHipY + 0.05) {
+          errors.push('sagging_hips');
+        } else if (activeHip.y < expectedHipY - 0.05) {
+          errors.push('piked_hips');
+        } else {
+          errors.push('poor_alignment');
+        }
+      }
+
+      this.currentErrors = errors;
+
+      // Every time a new second is reached, treat it as a "rep" for the HUD
+      if (newRepCount > this.repCount) {
+        this.repCount = newRepCount;
+        const repResult = this.addRepResult('plank', isGoodForm, errors);
+        return { state: 'planking', errors, currentRep: repResult };
+      }
+
+    } else {
+      this.currentState = 'resting';
     }
 
     return { state: this.currentState, errors: [...errors] };

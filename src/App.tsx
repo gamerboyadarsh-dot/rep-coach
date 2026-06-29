@@ -88,7 +88,7 @@ function App() {
     exerciseLogic.reset();
     goalReachedRef.current = false;
     setRepCount(0);
-    setExerciseState(selectedExercise === 'pushup' ? 'up' : 'standing');
+    setExerciseState(selectedExercise === 'pushup' ? 'up' : selectedExercise === 'plank' ? 'resting' : 'standing');
     setErrors([]);
     setFormScore(100);
     setAppState('workout');
@@ -118,6 +118,8 @@ function App() {
       result = exerciseLogic.processSquatFrame(landmarks);
     } else if (exercise === 'pushup') {
       result = exerciseLogic.processPushupFrame(landmarks);
+    } else if (exercise === 'plank') {
+      result = exerciseLogic.processPlankFrame(landmarks);
     } else {
       result = exerciseLogic.processJumpingJackFrame(landmarks);
     }
@@ -220,6 +222,7 @@ function App() {
                   setAppState('auth');
                 }
               }}
+              onPhotoUpdate={(newPhoto) => setUserPhoto(newPhoto)}
             />
           )}
 
@@ -233,6 +236,7 @@ function App() {
                 setGoal(selectedGoal);
                 handleStartWorkout(ex, selectedGoal);
               }}
+              onPhotoUpdate={(p) => setUserPhoto(p)}
             />
           )}
 

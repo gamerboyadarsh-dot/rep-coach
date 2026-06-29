@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ExerciseType, RepState, PushupState } from '../lib/exerciseRules';
 import { FormFeedback } from './FormFeedback';
 import { sfx } from '../lib/sounds';
-import { Target, Activity, Flame, XOctagon, CheckCircle2 } from 'lucide-react';
+import { Target, Activity, Flame, XOctagon, CheckCircle2, Volume2, VolumeX } from 'lucide-react';
 
 interface Props {
   exercise: ExerciseType;
@@ -20,26 +20,50 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
   const [flash, setFlash] = useState(false);
   const [prevRep, setPrevRep] = useState(repCount);
   const [prevErrorKey, setPrevErrorKey] = useState('');
+  const [voiceOn, setVoiceOn] = useState(() => sfx.isVoiceEnabled());
+
+  const toggleVoice = () => {
+    const newVal = !voiceOn;
+    setVoiceOn(newVal);
+    sfx.setVoiceEnabled(newVal);
+    sfx.playClick();
+  };
 
   useEffect(() => {
     if (repCount > prevRep) {
       setFlash(true);
       sfx.playRepComplete();
+      
+      // Voice feedback every 5 reps or goal reached
+      if (voiceOn) {
+        if (goal && repCount === goal) {
+          sfx.speakCue("Goal reached! Great job.");
+        } else if (goal && repCount === Math.floor(goal / 2)) {
+          sfx.speakCue("Halfway there!");
+        } else if (repCount % 5 === 0) {
+          sfx.speakCue(`${repCount}`);
+        }
+      }
+
       if (streak > 0 && streak % 5 === 0) {
         setTimeout(() => sfx.playCombo(), 400);
       }
       setTimeout(() => setFlash(false), 300);
       setPrevRep(repCount);
     }
-  }, [repCount, prevRep, streak]);
+  }, [repCount, prevRep, streak, voiceOn, goal]);
 
   useEffect(() => {
     const key = errors.slice().sort().join(',');
     if (errors.length > 0 && key !== prevErrorKey) {
       sfx.playError();
+      if (voiceOn) {
+        // Just speak the first error so it doesn't ramble
+        sfx.speakCue(errors[0]);
+      }
     }
     setPrevErrorKey(key);
-  }, [errors, prevErrorKey]);
+  }, [errors, prevErrorKey, voiceOn]);
 
   const scoreColor = formScore >= 80 ? 'text-blue-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
   const confidenceColor = poseConfidence >= 70 ? 'text-blue-400' : poseConfidence >= 40 ? 'text-orange-400' : 'text-red-400';
@@ -52,6 +76,8 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       case 'descending': case 'out': return '50%';
       case 'bottom': return '100%';
       case 'ascending': case 'in': return '75%';
+      case 'planking': return '100%';
+      case 'resting': return '0%';
       default: return '0%';
     }
   })();
@@ -94,12 +120,21 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           )}
         </div>
 
-        <button
-          onClick={() => { sfx.playClick(); onEndSession(); }}
-          className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl px-5 py-3 transition-all pointer-events-auto font-bold uppercase tracking-widest cursor-pointer text-xs md:text-sm shadow-lg self-end md:self-auto active:scale-95"
-        >
-          End Session
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={toggleVoice}
+            className="bg-slate-800/80 backdrop-blur-md border border-slate-700 hover:bg-slate-700 rounded-2xl px-4 py-3 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center text-slate-300 hover:text-white"
+          >
+            {voiceOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 opacity-50" />}
+          </button>
+          
+          <button
+            onClick={() => { sfx.playClick(); onEndSession(); }}
+            className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl px-5 py-3 transition-all pointer-events-auto font-bold uppercase tracking-widest cursor-pointer text-xs md:text-sm shadow-lg self-end md:self-auto active:scale-95"
+          >
+            End Session
+          </button>
+        </div>
       </div>
 
       <FormFeedback errors={errors} />
@@ -111,7 +146,9 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 min-w-[140px] md:min-w-[220px] shadow-2xl flex flex-col items-center pointer-events-auto">
           <div className="flex items-center justify-center gap-2 mb-2 w-full">
             <Target className="w-5 h-5 text-blue-400 drop-shadow-lg" />
-            <span className="text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">Rep Count</span>
+            <span className="text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">
+              {exercise === 'plank' ? 'Hold Time (s)' : 'Rep Count'}
+            </span>
           </div>
 
           <div className="flex items-baseline justify-center gap-2 w-full">

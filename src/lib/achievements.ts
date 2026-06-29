@@ -22,6 +22,7 @@ export interface PersonalRecords {
   squat: number;
   pushup: number;
   jumping_jack: number;
+  plank: number;
 }
 
 export interface UserStats {
@@ -35,6 +36,7 @@ export interface UserStats {
   personalRecords: PersonalRecords;
   weight?: number;
   height?: number;
+  profilePicture?: string;
 }
 
 export const defaultBadges: Record<string, Badge> = {
@@ -55,7 +57,8 @@ function getLocalStats(userId: string): UserStats | null {
         workoutHistory: parsed.workoutHistory || [],
         personalRecords: parsed.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 },
         weight: parsed.weight,
-        height: parsed.height
+        height: parsed.height,
+        profilePicture: parsed.profilePicture
       };
     }
   } catch (e) {
@@ -81,7 +84,7 @@ export async function loadStats(userId: string, isGuest: boolean): Promise<UserS
     lastWorkoutDate: null,
     badges: { ...defaultBadges },
     workoutHistory: [],
-    personalRecords: { squat: 0, pushup: 0, jumping_jack: 0 }
+    personalRecords: { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 }
   };
 
   const localStats = getLocalStats(userId) || defaultStats;
@@ -108,7 +111,8 @@ export async function loadStats(userId: string, isGuest: boolean): Promise<UserS
         workoutHistory: remoteStats.workoutHistory || [],
         personalRecords: { ...defaultStats.personalRecords, ...(remoteStats.personalRecords || {}) },
         weight: remoteStats.weight,
-        height: remoteStats.height
+        height: remoteStats.height,
+        profilePicture: remoteStats.profilePicture
       };
     }
     return localStats;
@@ -129,19 +133,20 @@ export async function processWorkout(
   formScore: number,
   exercise: string,
   durationSeconds: number
-): Promise<{ badges: Badge[], calories: number }> {
+): Promise<{ badges: Badge[], calories: number, isNewPR: boolean }> {
   const stats = await loadStats(userId, isGuest);
   const newlyUnlocked: Badge[] = [];
   const now = Date.now();
 
-  if (reps === 0) return { badges: [], calories: 0 }; // Don't process empty workouts
+  if (reps === 0) return { badges: [], calories: 0, isNewPR: false }; // Don't process empty workouts
 
   // Calorie calculation using MET formula
   // MET values: Squat = 5.0, Pushup = 3.8, Jumping Jack = 8.0
   const metValues: Record<string, number> = {
     squat: 5.0,
     pushup: 3.8,
-    jumping_jack: 8.0
+    jumping_jack: 8.0,
+    plank: 3.0
   };
   const met = metValues[exercise] || 4.0;
   
@@ -167,8 +172,10 @@ export async function processWorkout(
   stats.workoutHistory = [session, ...stats.workoutHistory].slice(0, 50);
 
   // Update PRs
+  let isNewPR = false;
   if (reps > (stats.personalRecords[exercise as keyof PersonalRecords] || 0)) {
     stats.personalRecords[exercise as keyof PersonalRecords] = reps;
+    isNewPR = true;
   }
 
   // Update totals
@@ -215,5 +222,5 @@ export async function processWorkout(
   }
 
   await saveStats(userId, stats, isGuest);
-  return { badges: newlyUnlocked, calories };
+  return { badges: newlyUnlocked, calories, isNewPR };
 }

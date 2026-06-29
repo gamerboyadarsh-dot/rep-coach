@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { sfx } from '../lib/sounds';
 import { loadStats, saveStats, type UserStats } from '../lib/achievements';
 import { motion } from 'framer-motion';
-import { Trophy, Activity, Flame, LogOut, Award, Star, Medal, Settings, Video, Moon, Bell, History } from 'lucide-react';
+import { Trophy, Activity, Flame, LogOut, Award, Star, Medal, Settings, Video, Moon, Bell, History, Camera } from 'lucide-react';
 
 interface Props {
   userId: string;
@@ -10,9 +10,10 @@ interface Props {
   username: string;
   photoURL?: string | null;
   onLogout: () => void;
+  onPhotoUpdate?: (photo: string) => void;
 }
 
-export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: Props) {
+export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onPhotoUpdate }: Props) {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
@@ -20,6 +21,52 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
   
   const [isLightMode, setIsLightMode] = useState(() => localStorage.getItem('repCoach_theme') === 'light');
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => localStorage.getItem('repCoach_notifications') === 'true');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          if (stats) {
+            const updated = { ...stats, profilePicture: base64 };
+            setStats(updated);
+            await saveStats(userId, updated, isGuest);
+          }
+          if (onPhotoUpdate) onPhotoUpdate(base64);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (isLightMode) {
@@ -153,14 +200,24 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout }: P
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-8 md:p-12 w-full max-w-5xl rounded-3xl shadow-2xl relative">
         
         <div className="flex flex-col md:flex-row items-center gap-8 mb-12 border-b border-slate-800 pb-10">
-          <div className="relative">
-            {photoURL ? (
-              <img src={photoURL} alt={username} className="w-32 h-32 rounded-full border-4 border-slate-800 shadow-[0_0_30px_rgba(59,130,246,0.3)] object-cover" />
+          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+            />
+            {stats.profilePicture || photoURL ? (
+              <img src={stats.profilePicture || photoURL!} alt={username} className="w-32 h-32 rounded-full border-4 border-slate-800 shadow-[0_0_30px_rgba(59,130,246,0.3)] object-cover group-hover:opacity-75 transition-opacity" />
             ) : (
-              <div className="w-32 h-32 rounded-full border-4 border-slate-800 bg-slate-800 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-                <span className="text-4xl font-bold text-slate-400">{username.charAt(0).toUpperCase()}</span>
+              <div className="w-32 h-32 rounded-full border-4 border-slate-800 bg-slate-800 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)] group-hover:bg-slate-700 transition-colors">
+                <span className="text-4xl font-bold text-slate-400 group-hover:text-white transition-colors">{username.charAt(0).toUpperCase()}</span>
               </div>
             )}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/40">
+              <Camera className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
             <div className="absolute -bottom-2 -right-2 bg-slate-800 p-2 rounded-full border border-slate-700 shadow-lg">
               {currentRank.icon}
             </div>

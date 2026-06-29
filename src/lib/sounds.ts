@@ -46,6 +46,28 @@ class SoundSystem {
   playClick() {
     this.playTone(1200, 'sine', 0.05, 0.05);
   }
+
+  private voiceEnabled = localStorage.getItem('repCoach_voice') !== 'false';
+
+  setVoiceEnabled(enabled: boolean) {
+    this.voiceEnabled = enabled;
+    localStorage.setItem('repCoach_voice', enabled.toString());
+  }
+
+  isVoiceEnabled() {
+    return this.voiceEnabled;
+  }
+
+  speakCue(text: string) {
+    if (!this.voiceEnabled || !window.speechSynthesis) return;
+    
+    // Prevent overlapping spam
+    if (window.speechSynthesis.speaking) return;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.1;
+    window.speechSynthesis.speak(utterance);
+  }
 }
 
 export const sfx = new SoundSystem();

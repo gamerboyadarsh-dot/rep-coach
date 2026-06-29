@@ -25,6 +25,7 @@ interface Props {
 export function SessionSummary({ userId, isGuest, username, results, exercise, durationSeconds, onRestart }: Props) {
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>([]);
   const [sessionCalories, setSessionCalories] = useState<number>(0);
+  const [isNewPR, setIsNewPR] = useState(false);
   const totalReps = results.length;
   const goodReps = results.filter(r => r.goodForm).length;
   const formScore = totalReps === 0 ? 0 : Math.round((goodReps / totalReps) * 100);
@@ -38,8 +39,9 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           const result = await processWorkout(userId, isGuest, totalReps, formScore, exercise, durationSeconds);
           setUnlockedBadges(result.badges);
           setSessionCalories(result.calories);
+          setIsNewPR(result.isNewPR);
 
-          if (result.badges.length > 0 || formScore >= 80) {
+          if (result.badges.length > 0 || formScore >= 80 || result.isNewPR) {
             confetti({
               particleCount: 150,
               spread: 80,
@@ -65,7 +67,9 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
   let specificTip = "";
   
   if (totalReps === 0) {
-    aiMessage = "Zero reps recorded. Even rest days require more effort than this.";
+    aiMessage = exercise === 'plank' 
+      ? "Zero seconds recorded. Get on the floor and hold."
+      : "Zero reps recorded. Even rest days require more effort than this.";
   } else {
     // Analyze errors to provide specific tips
     const errorCounts: Record<string, number> = {};
@@ -85,14 +89,19 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     });
 
     if (formScore >= 90) {
-      aiMessage = "Outstanding biomechanical execution. Your form is exemplary. Keep pushing the limits.";
+      aiMessage = `Outstanding execution. You burned ${sessionCalories} calories over ${formatDuration(durationSeconds)} with a stellar ${formScore}% form score`;
+      if (isNewPR) aiMessage += `, and you even hit a new personal best for reps!`;
+      else aiMessage += `. Keep pushing the limits.`;
+      
       if (mostFrequentError) {
         specificTip = `Near perfect. Just a slight note: try to minimize "${mostFrequentError}" on fatigue reps.`;
       }
     } else if (formScore >= 60) {
-      aiMessage = "Good effort, but your form is slipping. Focus on quality over quantity for the next session.";
+      aiMessage = `Solid effort, burning ${sessionCalories} calories in ${formatDuration(durationSeconds)} with ${formScore}% form.`;
+      if (isNewPR) aiMessage += ` You pushed hard enough to set a new personal record, but form started slipping.`;
+      else aiMessage += ` Focus on quality over quantity next time.`;
+
       if (mostFrequentError) {
-        // Map common errors to tips
         if (mostFrequentError.toLowerCase().includes('depth')) {
           specificTip = "You're consistently missing depth. Drop the weight or stretch your hips to break parallel.";
         } else if (mostFrequentError.toLowerCase().includes('knee')) {
@@ -102,13 +111,13 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
         } else if (mostFrequentError.toLowerCase().includes('flared')) {
           specificTip = "Tuck your elbows to 45 degrees to protect your shoulders.";
         } else {
-          specificTip = `Main issue to fix: ${mostFrequentError}. Focus on this specific cue next time.`;
+          specificTip = `Main issue to fix: ${mostFrequentError.replace(/_/g, ' ')}. Focus on this specific cue next time.`;
         }
       }
     } else {
-      aiMessage = "Critical form failure detected. We need to regress and focus purely on mechanics. Do not sacrifice form.";
+      aiMessage = `Critical form failure detected (${formScore}%). You spent ${formatDuration(durationSeconds)} working out, but we need to regress and focus purely on mechanics.`;
       if (mostFrequentError) {
-        specificTip = `Your primary failure point is: ${mostFrequentError}. Regress the movement until this is corrected.`;
+        specificTip = `Your primary failure point is: ${mostFrequentError.replace(/_/g, ' ')}. Regress the movement until this is corrected.`;
       }
     }
   }
@@ -156,7 +165,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" /> Reps
+              <Activity className="w-4 h-4 text-blue-400" /> {exercise === 'plank' ? 'Hold (s)' : 'Reps'}
             </div>
             <div className="text-4xl font-black text-white">{totalReps}</div>
           </div>

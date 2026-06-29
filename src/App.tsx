@@ -3,6 +3,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { usePoseDetection } from './hooks/usePoseDetection';
 import { useVoiceCommand } from './hooks/useVoiceCommand';
+import { getVisionCoachingAdvice } from './lib/genAI';
+import { rhythmEngine } from './lib/rhythmEngine';
 import { exerciseLogic } from './lib/exerciseRules';
 import { sfx } from './lib/sounds';
 import { loadGhostChallenge, type GhostData } from './lib/ghostChallenges';
@@ -18,6 +20,7 @@ const AuthScreen = React.lazy(() => import('./components/AuthScreen').then(m => 
 const UserProfile = React.lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
 const ExerciseGuide = React.lazy(() => import('./components/ExerciseGuide').then(m => ({ default: m.ExerciseGuide })));
 const ARAvatar = React.lazy(() => import('./components/ARAvatar').then(m => ({ default: m.ARAvatar })));
+const AICoachChat = React.lazy(() => import('./components/AICoachChat').then(m => ({ default: m.AICoachChat })));
 
 // Loading Skeleton
 const FullScreenLoader = () => (
@@ -75,7 +78,11 @@ function App() {
   const frameBufferRef = useRef<string[]>([]);
   const frameCounterRef = useRef<number>(0);
   const repTimestampsRef = useRef<number[]>([]);
+  const consecutiveBadRepsRef = useRef(0);
+  const isCoachingRef = useRef(false);
   const [bestRepFrames, setBestRepFrames] = useState<string[]>([]);
+  const [rhythmModeEnabled, setRhythmModeEnabled] = useState(false);
+  const [rhythmRating, setRhythmRating] = useState<'PERFECT' | 'GOOD' | 'MISS' | null>(null);
 
   const {
     isLoaded,
@@ -111,9 +118,12 @@ function App() {
     frameBufferRef.current = [];
     frameCounterRef.current = 0;
     repTimestampsRef.current = [];
+    consecutiveBadRepsRef.current = 0;
+    isCoachingRef.current = false;
     setAppState('workout');
     setStartTime(Date.now());
     setWorkoutDuration(0);
+    if (rhythmModeEnabled) rhythmEngine.start();
 
     try {
       await startCamera();
@@ -123,6 +133,8 @@ function App() {
   };
 
   const handleEndSession = () => {
+    sfx.playClick();
+    if (rhythmModeEnabled) rhythmEngine.stop();
     stopCamera();
     setWorkoutDuration(Math.round((Date.now() - startTime) / 1000));
     setAppState('summary');
@@ -179,6 +191,34 @@ function App() {
 
     if (currentReps > repTimestampsRef.current.length) {
       repTimestampsRef.current.push(Date.now() - startTime);
+      
+      const currentFormScore = exerciseLogic.getFormScore();
+      if (currentFormScore < 100) {
+        consecutiveBadRepsRef.current += 1;
+        if (consecutiveBadRepsRef.current >= 3 && !isCoachingRef.current) {
+          isCoachingRef.current = true;
+          const frame = frameBufferRef.current[frameBufferRef.current.length - 1];
+          if (frame) {
+            getVisionCoachingAdvice(frame, exercise).then(advice => {
+              if (advice) {
+                sfx.speakCue("Coach says: " + advice);
+              }
+              consecutiveBadRepsRef.current = 0;
+              setTimeout(() => { isCoachingRef.current = false; }, 8000); // 8s cooldown
+            });
+          } else {
+            isCoachingRef.current = false;
+          }
+        }
+      } else {
+        consecutiveBadRepsRef.current = 0; // reset on good form
+      }
+
+      if (rhythmModeEnabled) {
+        const rating = rhythmEngine.evaluateHit();
+        setRhythmRating(rating);
+        setTimeout(() => setRhythmRating(null), 1000);
+      }
     }
     
     const results = exerciseLogic.getResults();
@@ -306,13 +346,15 @@ function App() {
           )}
 
           {appState === 'selecting' && userId && username && (
-            <ExerciseSelector
+            <ExerciseSelector 
               userId={userId}
               isGuest={isGuest}
-              username={username}
+              username={username || 'Guest'}
               isListening={isListening}
               voiceControlEnabled={voiceControlEnabled}
               onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
+              rhythmModeEnabled={rhythmModeEnabled}
+              onToggleRhythmMode={() => setRhythmModeEnabled(v => !v)}
               onSelect={(ex, selectedGoal) => {
                 setExercise(ex);
                 setGoal(selectedGoal);
@@ -350,6 +392,8 @@ function App() {
                 startTime={startTime}
                 voiceControlEnabled={voiceControlEnabled}
                 onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
+                rhythmModeEnabled={rhythmModeEnabled}
+                rhythmRating={rhythmRating}
                 onEndSession={handleEndSession}
               />
             </div>
@@ -415,6 +459,7 @@ function App() {
             </div>
           )}
 
+          <AICoachChat />
         </div>
       </Suspense>
     </ErrorBoundary>

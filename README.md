@@ -48,7 +48,14 @@ Front/rear camera switching uses actual device enumeration (`enumerateDevices`) 
 - **Ghost Challenge Mode:** Async multiplayer racing! Your rep timestamps are saved to the cloud when you share a challenge link. When a friend opens it, a purple Ghost progress bar races them in real-time based on your exact pace.
 - **True 3D AR Avatar:** Mixed reality visualization uses `three.js` to map your live MediaPipe landmarks to a glowing 3D holographic avatar that mirrors your exact movements.
 - **Velocity & Power Physics Engine:** Measures the concentric phase of every rep in milliseconds to calculate explosive power output (Watts). Shows a fiery "EXPLOSIVE" multiplier combo when you generate high power with good form!
+- **Rhythm Mode (NEW):** Work out to the beat! Toggle Rhythm Mode to activate a high-energy physics engine synced precisely to a 130 BPM soundtrack (Alan Walker - Fade). The scoring engine gets stricter, grading your reps based on your timing with the beat.
 - **Hands-Free Voice Control:** Uses the native Web Speech API to let you start exercises (e.g. "Start Squats") and end sessions ("Finish") completely hands-free, with an on/off toggle for the mic.
+
+**AI Coach Chatbot (NEW)**
+- **Multi-Modal Gemini 2.5 Flash:** A fully integrated AI chatbot available via a floating action button (FAB) everywhere in the app. Ask it any fitness questions!
+- **Vision Form Check:** Snap a photo of your form or gym equipment and upload it for instant visual analysis.
+- **PDF Document Analysis:** Upload your customized workout or diet plan PDF to have the AI answer questions and summarize it on the fly.
+- **Client-Side Processing:** Images and PDFs are securely converted to base64 within your browser before being sent directly to the Gemini API.
 
 **Exercise Databank**
 Each exercise has a realistic reference photo, step-by-step form instructions, and an interactive front/back muscle-engagement diagram that highlights which muscles you've been working, color-coded by how often you've trained them.
@@ -65,7 +72,7 @@ Configured as an installable Progressive Web App with offline-capable caching.
 
 - **Frontend:** React 19 + TypeScript + Vite
 - **Styling:** Tailwind CSS v4 + custom CSS (glassmorphism, glow effects, animations)
-- **Computer Vision:** `@mediapipe/tasks-vision` (`PoseLandmarker`, GPU delegate)
+- **Computer Vision & AI:** `@mediapipe/tasks-vision` (client-side pose tracking), `@google/generative-ai` (Gemini 2.5 Flash Multi-Modal Chat & Vision)
 - **3D Rendering & AR:** `three`, `@react-three/fiber`, `@react-three/drei`
 - **Auth & Data:** Firebase Authentication (Google + GitHub providers) and Cloud Firestore, with a no-signup Guest Mode backed by `localStorage`
 - **Muscle Visualization:** `react-body-highlighter`

@@ -19,10 +19,12 @@ interface Props {
   startTime?: number;
   voiceControlEnabled?: boolean;
   onToggleVoiceControl?: () => void;
+  rhythmModeEnabled?: boolean;
+  rhythmRating?: 'PERFECT' | 'GOOD' | 'MISS' | null;
   onEndSession: () => void;
 }
 
-export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseConfidence, streak, goal, power = 0, ghostData, startTime = 0, voiceControlEnabled = false, onToggleVoiceControl, onEndSession }: Props) {
+export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseConfidence, streak, goal, power = 0, ghostData, startTime = 0, voiceControlEnabled = false, onToggleVoiceControl, rhythmModeEnabled = false, rhythmRating = null, onEndSession }: Props) {
   const [flash, setFlash] = useState(false);
   const [prevRep, setPrevRep] = useState(repCount);
   const [prevErrorKey, setPrevErrorKey] = useState('');
@@ -115,7 +117,7 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
   })();
 
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none transition-all duration-300">
+    <div className="absolute inset-0 z-50 pointer-events-none transition-all duration-300">
       {/* Top Bar */}
       <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex flex-col md:flex-row gap-4 justify-between items-start">
         <div className="flex gap-3 flex-wrap">
@@ -182,12 +184,35 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       </div>
 
       <div className="absolute top-28 left-4 right-4 flex justify-between items-start pointer-events-none">
-        <FormFeedback errors={errors} />
-        {power > 150 && (
-          <div className="bg-orange-500/90 text-white font-black italic tracking-tighter px-4 py-2 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.8)] animate-pulse rotate-3 text-xl border-2 border-orange-300">
-            EXPLOSIVE 🔥
+       {/* Exploding Power Metric (If very explosive) */}
+      {power > 120 && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ping opacity-0 text-orange-500 font-black text-6xl italic drop-shadow-[0_0_25px_rgba(249,115,22,1)] pointer-events-none z-50">
+          EXPLOSIVE 🔥
+        </div>
+      )}
+
+      {/* Rhythm Game Hit Rating */}
+      {rhythmModeEnabled && rhythmRating && (
+        <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-bounce font-black text-6xl italic drop-shadow-[0_0_25px_rgba(168,85,247,1)] pointer-events-none z-50 ${
+          rhythmRating === 'PERFECT' ? 'text-purple-400' :
+          rhythmRating === 'GOOD' ? 'text-blue-400' : 'text-red-500'
+        }`}>
+          {rhythmRating}!
+        </div>
+      )}
+
+      {/* Rhythm Beat Indicator */}
+      {rhythmModeEnabled && (
+        <div className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-64 bg-slate-900/50 rounded-full border border-purple-500/30 overflow-hidden flex flex-col justify-end pointer-events-none">
+          <div className="w-full h-8 bg-purple-500/20 border-y border-purple-400/50 absolute bottom-8 z-10 flex items-center justify-center">
+            <div className="text-[8px] font-bold text-purple-300 uppercase tracking-widest">Beat</div>
           </div>
-        )}
+          <div className="w-full bg-gradient-to-t from-purple-500/80 to-transparent animate-pulse" style={{ height: '100%', animationDuration: '0.5s', animationIterationCount: 'infinite', animationTimingFunction: 'linear' }}></div>
+        </div>
+      )}
+
+      {/* Top HUD Area */}
+        <FormFeedback errors={errors} />
       </div>
 
       {/* Bottom Panels */}

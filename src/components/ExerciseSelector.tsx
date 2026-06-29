@@ -14,6 +14,8 @@ interface Props {
   isListening?: boolean;
   voiceControlEnabled?: boolean;
   onToggleVoiceControl?: () => void;
+  rhythmModeEnabled?: boolean;
+  onToggleRhythmMode?: () => void;
 }
 
 function formatDuration(sec: number) {
@@ -22,7 +24,11 @@ function formatDuration(sec: number) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoUpdate, isListening = false, voiceControlEnabled = false, onToggleVoiceControl }: Props) {
+export function ExerciseSelector({ 
+  userId, isGuest, username, onSelect, onPhotoUpdate, 
+  isListening = false, voiceControlEnabled = false, onToggleVoiceControl,
+  rhythmModeEnabled = false, onToggleRhythmMode
+}: Props) {
   const [lifetimeReps, setLifetimeReps] = useState(0);
   const [streak, setStreak] = useState(0);
   const [goal, setGoal] = useState<number | null>(null);
@@ -126,6 +132,20 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect, onPhotoU
                     Voice Off
                   </>
                 )}
+              </button>
+            )}
+            
+            {onToggleRhythmMode && (
+              <button
+                onClick={() => { sfx.playClick(); onToggleRhythmMode(); }}
+                className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  rhythmModeEnabled 
+                    ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' 
+                    : 'bg-slate-700/50 border-slate-600 text-slate-400 hover:bg-slate-700 hover:text-white'
+                }`}
+              >
+                <Zap className={`w-3.5 h-3.5 ${rhythmModeEnabled ? 'animate-pulse' : ''}`} />
+                {rhythmModeEnabled ? 'Rhythm Mode: ON' : 'Rhythm Mode'}
               </button>
             )}
           </div>

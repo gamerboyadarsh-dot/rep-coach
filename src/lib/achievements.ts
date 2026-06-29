@@ -73,7 +73,7 @@ function saveLocalStats(userId: string, stats: UserStats) {
 }
 
 export async function loadStats(userId: string, isGuest: boolean): Promise<UserStats> {
-  const defaultStats = {
+  const defaultStats: UserStats = {
     totalReps: 0,
     totalWorkouts: 0,
     highestStreak: 0,
@@ -84,21 +84,34 @@ export async function loadStats(userId: string, isGuest: boolean): Promise<UserS
     personalRecords: { squat: 0, pushup: 0, jumping_jack: 0 }
   };
 
+  const localStats = getLocalStats(userId) || defaultStats;
+
   if (isGuest) {
-    return getLocalStats(userId) || defaultStats;
+    return localStats;
   } else {
     const remoteStats = await fetchUserStats(userId);
     if (remoteStats) {
+      const remoteWorkouts = remoteStats.totalWorkouts || 0;
+      const localWorkouts = localStats.totalWorkouts || 0;
+      
+      // If local storage has more workouts, use local storage to prevent data loss 
+      // if previous Firestore saves failed (e.g. permission or network errors).
+      if (localWorkouts > remoteWorkouts) {
+        saveUserStats(userId, localStats).catch(console.error); // Async sync attempt
+        return localStats;
+      }
+
       return {
+        ...defaultStats,
         ...remoteStats,
         badges: { ...defaultBadges, ...(remoteStats.badges || {}) },
         workoutHistory: remoteStats.workoutHistory || [],
-        personalRecords: remoteStats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0 },
+        personalRecords: { ...defaultStats.personalRecords, ...(remoteStats.personalRecords || {}) },
         weight: remoteStats.weight,
         height: remoteStats.height
       };
     }
-    return getLocalStats(userId) || defaultStats;
+    return localStats;
   }
 }
 
@@ -116,16 +129,29 @@ export async function processWorkout(
   formScore: number,
   exercise: string,
   durationSeconds: number
-): Promise<Badge[]> {
+): Promise<{ badges: Badge[], calories: number }> {
   const stats = await loadStats(userId, isGuest);
   const newlyUnlocked: Badge[] = [];
   const now = Date.now();
 
-  if (reps === 0) return []; // Don't process empty workouts
+  if (reps === 0) return { badges: [], calories: 0 }; // Don't process empty workouts
 
-  // Approximate calories (e.g. 0.3 cals per squat/pushup, 0.2 for jumping jacks, roughly depending on form/duration)
-  let calMultiplier = exercise === 'jumping_jack' ? 0.2 : 0.4;
-  const calories = Math.round(reps * calMultiplier);
+  // Calorie calculation using MET formula
+  // MET values: Squat = 5.0, Pushup = 3.8, Jumping Jack = 8.0
+  const metValues: Record<string, number> = {
+    squat: 5.0,
+    pushup: 3.8,
+    jumping_jack: 8.0
+  };
+  const met = metValues[exercise] || 4.0;
+  
+  // Use user's weight or fallback to standard 70kg
+  const weightKg = stats.weight || 70;
+  
+  // Calories = MET × weight(kg) × duration(hours)
+  // Ensure at least 1 calorie if they did any reps
+  const durationHours = durationSeconds / 3600;
+  const calories = Math.max(1, Math.round(met * weightKg * durationHours));
 
   const session: WorkoutSession = {
     id: `ws_${now}`,
@@ -189,5 +215,5 @@ export async function processWorkout(
   }
 
   await saveStats(userId, stats, isGuest);
-  return newlyUnlocked;
+  return { badges: newlyUnlocked, calories };
 }

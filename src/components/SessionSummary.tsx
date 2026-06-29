@@ -4,7 +4,13 @@ import { sfx } from '../lib/sounds';
 import confetti from 'canvas-confetti';
 import { processWorkout, type Badge } from '../lib/achievements';
 import { motion } from 'framer-motion';
-import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon } from 'lucide-react';
+import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame } from 'lucide-react';
+
+function formatDuration(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
 
 interface Props {
   userId: string;
@@ -18,6 +24,7 @@ interface Props {
 
 export function SessionSummary({ userId, isGuest, username, results, exercise, durationSeconds, onRestart }: Props) {
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>([]);
+  const [sessionCalories, setSessionCalories] = useState<number>(0);
   const totalReps = results.length;
   const goodReps = results.filter(r => r.goodForm).length;
   const formScore = totalReps === 0 ? 0 : Math.round((goodReps / totalReps) * 100);
@@ -28,10 +35,11 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     if (totalReps > 0) {
       async function handleWorkout() {
         try {
-          const newBadges = await processWorkout(userId, isGuest, totalReps, formScore, exercise, durationSeconds);
-          setUnlockedBadges(newBadges);
+          const result = await processWorkout(userId, isGuest, totalReps, formScore, exercise, durationSeconds);
+          setUnlockedBadges(result.badges);
+          setSessionCalories(result.calories);
 
-          if (newBadges.length > 0 || formScore >= 80) {
+          if (result.badges.length > 0 || formScore >= 80) {
             confetti({
               particleCount: 150,
               spread: 80,
@@ -145,16 +153,30 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 text-center flex flex-col items-center justify-center">
-            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" /> Total Reps
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400" /> Reps
             </div>
-            <div className="text-6xl font-black text-white">{totalReps}</div>
+            <div className="text-4xl font-black text-white">{totalReps}</div>
           </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 text-center flex flex-col items-center justify-center">
-            <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">Form Quality</div>
-            <div className={`text-6xl font-black ${scoreColor}`}>{formScore}%</div>
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
+              <CheckCircle2 className={`w-4 h-4 ${scoreColor}`} /> Form
+            </div>
+            <div className={`text-4xl font-black ${scoreColor}`}>{formScore}%</div>
+          </div>
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
+              <Timer className="w-4 h-4 text-purple-400" /> Time
+            </div>
+            <div className="text-4xl font-black text-white">{formatDuration(durationSeconds)}</div>
+          </div>
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
+              <Flame className="w-4 h-4 text-orange-400" /> Cals
+            </div>
+            <div className="text-4xl font-black text-white">{sessionCalories}</div>
           </div>
         </div>
         

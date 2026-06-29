@@ -12,6 +12,12 @@ interface Props {
   onSelect: (exercise: ExerciseType, goal: number | null) => void;
 }
 
+function formatDuration(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
 export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props) {
   const [lifetimeReps, setLifetimeReps] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -21,7 +27,8 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
   const [recentWorkouts, setRecentWorkouts] = useState<WorkoutSession[]>([]);
   const [prs, setPrs] = useState<PersonalRecords>({ squat: 0, pushup: 0, jumping_jack: 0 });
   const [totalCalories, setTotalCalories] = useState(0);
-  const [chartData, setChartData] = useState<{day: string, reps: number}[]>([]);
+  const [chartData, setChartData] = useState<{day: string, reps: number, calories: number}[]>([]);
+  const [chartMode, setChartMode] = useState<'reps' | 'calories'>('reps');
 
   useEffect(() => {
     sfx.init();
@@ -44,15 +51,15 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
           date.setDate(date.getDate() - i);
           const dateString = date.toLocaleDateString(undefined, { weekday: 'short' });
           
-          // sum reps for this day
+          // sum reps and calories for this day
           const dayStart = new Date(date.setHours(0,0,0,0)).getTime();
           const dayEnd = new Date(date.setHours(23,59,59,999)).getTime();
           
-          const repsThatDay = history
-            .filter(w => w.date >= dayStart && w.date <= dayEnd)
-            .reduce((sum, w) => sum + w.reps, 0);
+          const dayWorkouts = history.filter(w => w.date >= dayStart && w.date <= dayEnd);
+          const repsThatDay = dayWorkouts.reduce((sum, w) => sum + w.reps, 0);
+          const caloriesThatDay = dayWorkouts.reduce((sum, w) => sum + (w.calories || 0), 0);
             
-          data.push({ day: dateString, reps: repsThatDay });
+          data.push({ day: dateString, reps: repsThatDay, calories: caloriesThatDay });
         }
         setChartData(data);
         
@@ -68,7 +75,7 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
     onSelect(ex, goal);
   };
 
-  const maxChartReps = Math.max(...chartData.map(d => d.reps), 10); // Minimum scale 10
+  const maxChartValue = Math.max(...chartData.map(d => chartMode === 'reps' ? d.reps : d.calories), 10); // Minimum scale 10
 
   return (
     <div className="flex flex-col items-center min-h-screen pt-24 pb-12 px-6 relative z-10 w-full max-w-6xl mx-auto overflow-y-auto">
@@ -109,9 +116,15 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
           
           {/* Activity Chart */}
           <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-6 shadow-xl">
-            <h3 className="text-white font-bold text-lg mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-400" /> 7-Day Activity
-            </h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-400" /> 7-Day Activity
+              </h3>
+              <div className="flex bg-slate-900/80 rounded-lg p-1 border border-slate-700">
+                <button onClick={() => { sfx.playClick(); setChartMode('reps'); }} className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartMode === 'reps' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Reps</button>
+                <button onClick={() => { sfx.playClick(); setChartMode('calories'); }} className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${chartMode === 'calories' ? 'bg-orange-500 text-white' : 'text-slate-400 hover:text-white'}`}>Cals</button>
+              </div>
+            </div>
             <div className="h-48 w-full flex items-end justify-between gap-2 px-2 pb-6 relative">
               {/* Y-axis guidelines */}
               <div className="absolute inset-0 flex flex-col justify-between pb-6 pointer-events-none opacity-20">
@@ -121,18 +134,19 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
               </div>
               
               {chartData.map((data, i) => {
-                const heightPercentage = (data.reps / maxChartReps) * 100;
+                const val = chartMode === 'reps' ? data.reps : data.calories;
+                const heightPercentage = (val / maxChartValue) * 100;
                 return (
                   <div key={i} className="flex flex-col items-center flex-1 z-10 group h-full">
                     <div className="w-full max-w-[40px] bg-slate-700/50 rounded-t-lg relative flex items-end justify-center transition-all hover:bg-slate-600/50 flex-1">
                       <div 
-                        className="w-full bg-blue-500 rounded-t-lg transition-all duration-1000 ease-out group-hover:bg-blue-400"
+                        className={`w-full rounded-t-lg transition-all duration-1000 ease-out ${chartMode === 'reps' ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-orange-500 group-hover:bg-orange-400'}`}
                         style={{ height: `${heightPercentage}%` }}
                       ></div>
                       {/* Tooltip */}
-                      {data.reps > 0 && (
+                      {val > 0 && (
                         <div className="absolute -top-8 bg-slate-900 text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                          {data.reps}
+                          {val}
                         </div>
                       )}
                     </div>
@@ -245,6 +259,14 @@ export function ExerciseSelector({ userId, isGuest, username, onSelect }: Props)
                       <div className="flex flex-col items-end">
                         <span className={`font-bold leading-none ${w.formScore >= 80 ? 'text-blue-400' : w.formScore >= 50 ? 'text-orange-400' : 'text-red-400'}`}>{w.formScore}%</span>
                         <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Form</span>
+                      </div>
+                      <div className="flex flex-col items-end hidden sm:flex">
+                        <span className="text-white font-bold leading-none">{formatDuration(w.durationSeconds || 0)}</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Time</span>
+                      </div>
+                      <div className="flex flex-col items-end hidden sm:flex">
+                        <span className="text-white font-bold leading-none">{w.calories || 0}</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Cals</span>
                       </div>
                     </div>
                   </div>

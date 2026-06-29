@@ -4,7 +4,7 @@ import { BookOpen, CheckCircle2, Activity, Image as ImageIcon } from 'lucide-rea
 import Model from 'react-body-highlighter';
 import type { IExerciseData } from 'react-body-highlighter';
 
-type GuideTab = 'squat' | 'pushup' | 'jumping_jack';
+type GuideTab = 'squat' | 'pushup' | 'jumping_jack' | 'plank';
 
 export function ExerciseGuide() {
   const [activeTab, setActiveTab] = useState<GuideTab>('squat');
@@ -48,6 +48,19 @@ export function ExerciseGuide() {
         'Jump again to return to the starting position.',
         'Maintain a steady, continuous rhythm.'
       ]
+    },
+    plank: {
+      title: 'Plank Hold',
+      subtitle: 'Core & Total Body Stability',
+      formImage: '/images/realistic_plank_form.jpg',
+      muscles: [{ name: 'Plank', muscles: ['abs', 'obliques', 'lower-back', 'front-deltoids', 'gluteal'] }] as IExerciseData[],
+      instructions: [
+        'Get into a push-up position, but resting on your forearms instead of your hands.',
+        'Ensure your elbows are directly beneath your shoulders.',
+        'Keep your body in a straight line from your head to your heels.',
+        'Engage your core by sucking your belly button toward your spine.',
+        'Hold this position without letting your hips sag or pike up.'
+      ]
     }
   };
 
@@ -72,7 +85,8 @@ export function ExerciseGuide() {
           {[
             { id: 'squat', label: 'Squats' },
             { id: 'pushup', label: 'Push-ups' },
-            { id: 'jumping_jack', label: 'Jumping Jacks' }
+            { id: 'jumping_jack', label: 'Jumping Jacks' },
+            { id: 'plank', label: 'Plank' }
           ].map(tab => (
             <button 
               key={tab.id}

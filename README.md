@@ -16,15 +16,17 @@ Built in 24 hours for the Vibe Coding Hackathon.
 - Google MediaPipe (`PoseLandmarker`) tracks 33 3D body landmarks live via webcam, running entirely client-side on the GPU.
 - Every landmark's confidence score is used, not discarded — low-visibility joints (occluded, off-screen, poorly lit) are filtered out before they can throw off a rep count, and exercises that can be tracked from either side automatically use whichever side the camera sees more clearly.
 
-**Three Coached Exercises**
+**Four Coached Exercises**
 - **Squats** — hip/knee depth angle, standing-to-bottom state machine, knee valgus (caving-in) detection.
 - **Push-ups** — elbow extension angle, hip-sag detection to catch a collapsing plank.
 - **Jumping Jacks** — arm height and leg-spread tracking, normalized for distance from the camera.
+- **Plank Hold** — time-based isometric tracking that monitors back-sag and alignment to ensure a perfectly straight line.
 
 Each rep is graded 0-100% based on whether it cleared the relevant form checks, with specific errors (shallow depth, knees caving in, hips sagging, partial range of motion) surfaced live.
 
-**Live Workout HUD**
-While you train, you see: current rep / target rep, live pose-tracking confidence (%), current exercise stage (e.g. descending, bottom, ascending), and a clear good-form / bad-form indicator — all updating in real time, not just at the end of a set.
+**Live Workout HUD & Voice Coaching**
+While you train, you see: current rep / target rep (or time for planks), live pose-tracking confidence (%), current exercise stage (e.g. descending, bottom, ascending), and a clear good-form / bad-form indicator — all updating in real time.
+**Spoken Voice Feedback**: The browser's native SpeechSynthesis API gives you live audio cues and rep counts while you work out. You can even choose between a **Supportive Coach 🧘‍♀️** and an intense **Drill Sergeant 🪖** personality in the settings!
 
 **Real Camera Control**
 Front/rear camera switching uses actual device enumeration (`enumerateDevices`) and switches by `deviceId`, not just a CSS mirror flip — it falls back gracefully on single-camera devices and remembers your last-used camera between sessions.
@@ -36,8 +38,10 @@ Front/rear camera switching uses actual device enumeration (`enumerateDevices`) 
 **Dashboard & Progress Tracking**
 7-day activity chart, workout streak, calorie estimate, recent session history, and personal records per exercise.
 
-**Gamification**
-Unlockable achievement badges, daily streak tracking, confetti celebrations on milestones, and haptic feedback (`navigator.vibrate`) on supported devices.
+**Gamification & Social Sharing**
+- **XP & Leveling System:** Earn XP based on your form score and rep volume to rank up from Rookie all the way to Elite Athlete.
+- **Wordle-style Sharing:** One-click copy your emoji-filled workout results to share on social media and challenge your friends.
+- Unlockable achievement badges, daily streak tracking, confetti celebrations on milestones, and haptic feedback (`navigator.vibrate`) on supported devices.
 
 **Exercise Databank**
 Each exercise has a realistic reference photo, step-by-step form instructions, and an interactive front/back muscle-engagement diagram that highlights which muscles you've been working, color-coded by how often you've trained them.
@@ -59,7 +63,7 @@ Configured as an installable Progressive Web App with offline-capable caching.
 - **Muscle Visualization:** `react-body-highlighter`
 - **Animation:** `framer-motion`, `canvas-confetti`
 - **Icons:** `lucide-react`
-- **Audio:** Native Web Audio API — synthesized sound effects, no audio files
+- **Audio:** Native Web Audio API (synthesized sound effects) and Web Speech API (voice coaching)
 - **PWA:** `vite-plugin-pwa`
 - **Hosting:** Surge
 
@@ -105,7 +109,7 @@ Built in 24 hours, so a few things are deliberately scoped for a future pass rat
 
 - Email/password sign-in as a third auth option alongside Google and GitHub
 - Expanded databank entries (equipment, calorie estimate, breathing cues, and common-mistakes per exercise)
-- Additional exercises beyond squats, push-ups, and jumping jacks
+- Additional complex movements beyond the current four core exercises
 
 ---
 

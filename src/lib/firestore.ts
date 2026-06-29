@@ -20,7 +20,9 @@ export async function saveUserStats(uid: string, stats: UserStats): Promise<void
   if (!db) return;
   try {
     const docRef = doc(db, 'users', uid);
-    await setDoc(docRef, stats, { merge: true });
+    // Firestore throws on undefined. Clean the object.
+    const cleanStats = JSON.parse(JSON.stringify(stats));
+    await setDoc(docRef, cleanStats, { merge: true });
   } catch (err) {
     console.error('Error saving user stats to Firestore:', err);
   }

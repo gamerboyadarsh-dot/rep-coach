@@ -263,8 +263,8 @@ class ExerciseLogic {
       : (useLeft ? this.smoothedLeftElbowAngle! : this.smoothedRightElbowAngle!);
 
     // Thresholds
-    const EXTENDED_ANGLE = 150; // arms extended = top of pushup
-    const BENT_ANGLE = 100;     // arms bent = bottom of pushup
+    const EXTENDED_ANGLE = 135; // arms extended = top of pushup
+    const BENT_ANGLE = 115;     // arms bent = bottom of pushup
 
     const errors: string[] = [];
 

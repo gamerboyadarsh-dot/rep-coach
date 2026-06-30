@@ -4,6 +4,7 @@ import { loadStats, saveStats, getRankFromXP, type UserStats } from '../lib/achi
 import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect } from '../lib/animations';
 import { Trophy, Activity, Flame, LogOut, Settings, Video, Moon, Bell, History, Camera, Mic } from 'lucide-react';
+import { ScrambleNumber } from './ScrambleNumber';
 
 interface Props {
   userId: string;
@@ -145,10 +146,10 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
     : null;
 
   const getBmiCategory = (b: number) => {
-    if (b < 18.5) return { label: 'Underweight', color: 'text-blue-400', dot: 'bg-blue-400', glow: 'shadow-[0_0_10px_rgba(59,130,246,0.8)]' };
-    if (b < 25) return { label: 'Healthy Weight', color: 'text-green-400', dot: 'bg-green-400', glow: 'shadow-[0_0_10px_rgba(34,197,94,0.8)]' };
-    if (b < 30) return { label: 'Overweight', color: 'text-yellow-400', dot: 'bg-yellow-400', glow: 'shadow-[0_0_10px_rgba(234,179,8,0.8)]' };
-    return { label: 'Obese', color: 'text-red-500', dot: 'bg-red-500', glow: 'shadow-[0_0_10px_rgba(239,68,68,0.8)]' };
+    if (b < 18.5) return { label: 'Underweight', color: 'text-blue-400', dot: 'bg-blue-400', glowStyle: { boxShadow: '0 0 25px rgba(59,130,246,1)' } };
+    if (b < 25) return { label: 'Healthy Weight', color: 'text-green-400', dot: 'bg-green-400', glowStyle: { boxShadow: '0 0 25px rgba(34,197,94,1)' } };
+    if (b < 30) return { label: 'Overweight', color: 'text-yellow-400', dot: 'bg-yellow-400', glowStyle: { boxShadow: '0 0 25px rgba(234,179,8,1)' } };
+    return { label: 'Obese', color: 'text-red-500', dot: 'bg-red-500', glowStyle: { boxShadow: '0 0 25px rgba(239,68,68,1)' } };
   };
 
   const bmiNum = bmi ? Number(bmi) : 0;
@@ -272,14 +273,14 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Activity className="w-4 h-4 text-blue-400" /> Career Reps
             </div>
-            <div className="text-display text-hero-gradient">{stats.totalReps}</div>
+            <div className="text-display text-hero-gradient"><ScrambleNumber value={stats.totalReps} /></div>
           </motion.div>
           
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center flex flex-col items-center justify-center">
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Trophy className="w-4 h-4 text-purple-400" /> Best Streak
             </div>
-            <div className="text-display text-white">{stats.highestStreak}</div>
+            <div className="text-display text-white"><ScrambleNumber value={stats.highestStreak} /></div>
           </motion.div>
 
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center relative overflow-hidden flex flex-col items-center justify-center">
@@ -287,7 +288,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                Daily Streak
             </div>
             <div className="text-display text-orange-400 flex items-center justify-center gap-3">
-              {stats.currentDailyStreak} <Flame className="w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
+              <ScrambleNumber value={stats.currentDailyStreak} /> <Flame className="w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
             </div>
           </motion.div>
         </motion.div>
@@ -384,9 +385,12 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                       {/* Indicator Thumb */}
                       <div 
                         className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
-                        style={{ left: `calc(${bmiPercent}% - 8px)` }}
+                        style={{ left: `calc(${bmiPercent}% - 12px)` }}
                       >
-                        <div className={`w-4 h-4 rounded-full border-2 border-white ${bmiCat.dot} ${bmiCat.glow} shadow-xl transform hover:scale-125 transition-transform`} />
+                        <div 
+                          className={`w-6 h-6 rounded-full border-2 border-white ${bmiCat.dot} transform hover:scale-125 transition-transform animate-pulse`} 
+                          style={bmiCat.glowStyle} 
+                        />
                       </div>
                     </div>
 

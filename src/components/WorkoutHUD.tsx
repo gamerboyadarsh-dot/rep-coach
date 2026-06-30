@@ -103,6 +103,12 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
 
   const scoreColor = formScore >= 80 ? 'text-blue-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
   const confidenceColor = poseConfidence >= 70 ? 'text-blue-400' : poseConfidence >= 40 ? 'text-orange-400' : 'text-red-400';
+  
+  // HUD Gamification: Neon Breathing Glow based on Form
+  const scoreGlowStyle = formScore >= 80 ? { boxShadow: '0 0 50px rgba(59,130,246,0.6)', borderColor: 'rgba(59,130,246,0.5)' }
+                       : formScore >= 50 ? { boxShadow: '0 0 50px rgba(249,115,22,0.6)', borderColor: 'rgba(249,115,22,0.5)' }
+                       : { boxShadow: '0 0 60px rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.8)' };
+
   const isCombo = streak >= 3;
   const progress = goal ? Math.min((repCount / goal) * 100, 100) : null;
   const hasGoodForm = errors.length === 0 && poseConfidence >= 50;
@@ -232,8 +238,12 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       {/* Bottom Panels */}
       <motion.div variants={staggerContainer} className="absolute bottom-6 left-4 right-4 md:bottom-10 md:left-10 md:right-10 flex justify-between items-end pointer-events-none">
         
-        {/* Rep Counter */}
-        <motion.div variants={cardEntrance} className="surface-float p-8 rounded-3xl min-w-[160px] md:min-w-[260px] flex flex-col items-center pointer-events-auto shadow-2xl border border-white/10 relative overflow-hidden group">
+        {/* Rep Counter with Dynamic Neon Glow */}
+        <motion.div 
+          variants={cardEntrance} 
+          className={`surface-float p-8 rounded-3xl min-w-[160px] md:min-w-[260px] flex flex-col items-center pointer-events-auto relative overflow-hidden group transition-all duration-300 ${formScore < 50 ? 'animate-pulse' : ''}`}
+          style={scoreGlowStyle}
+        >
           {/* Subtle Glow */}
           <div className="absolute top-0 left-0 w-full h-full bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 

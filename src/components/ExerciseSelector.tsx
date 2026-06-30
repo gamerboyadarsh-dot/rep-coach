@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
-import { loadStats, getRankFromXP, type WorkoutSession, type PersonalRecords } from '../lib/achievements';
+import { loadStats, getRankFromXP, type WorkoutSession } from '../lib/achievements';
 import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff, Dumbbell } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
-import { motion, animate, useMotionValue, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect, tapEffect } from '../lib/animations';
-
-function AnimatedNumber({ value }: { value: number }) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
-  
-  useEffect(() => {
-    const controls = animate(count, value, { duration: 1.2, ease: [0.22, 1, 0.36, 1] });
-    return controls.stop;
-  }, [value, count]);
-
-  return <motion.span>{rounded}</motion.span>;
-}
+import { SpotlightCard } from './SpotlightCard';
+import { ScrambleNumber } from './ScrambleNumber';
 
 interface Props {
   userId: string;
@@ -43,7 +33,7 @@ export function ExerciseSelector({
   
   // Dashboard Specific State
   const [recentWorkouts, setRecentWorkouts] = useState<WorkoutSession[]>([]);
-  const [prs, setPrs] = useState<PersonalRecords>({ squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
+  // prs state removed
   const [totalCalories, setTotalCalories] = useState(0);
   const [xp, setXp] = useState(0);
   const [chartData, setChartData] = useState<{day: string, reps: number, calories: number}[]>([]);
@@ -66,7 +56,7 @@ export function ExerciseSelector({
         
         const history = stats.workoutHistory || [];
         setRecentWorkouts(history.slice(0, 3));
-        setPrs(stats.personalRecords || { squat: 0, pushup: 0, jumping_jack: 0, plank: 0 });
+        // setPrs removed
         setTotalCalories(history.reduce((sum, w) => sum + (w.calories || 0), 0));
         setXp(stats.xp || 0);
         
@@ -190,19 +180,19 @@ export function ExerciseSelector({
             <div className="flex items-center gap-2 text-meta mb-2">
               <Activity className="w-4 h-4 text-blue-500" /> REPS
             </div>
-            <div className="text-display text-hero-gradient"><AnimatedNumber value={lifetimeReps} /></div>
+            <div className="text-display text-hero-gradient"><ScrambleNumber value={lifetimeReps} /></div>
           </motion.div>
           <motion.div whileHover={hoverEffect} className="flex flex-col items-start surface-float px-6 py-5 min-w-[140px] flex-1 md:flex-none">
             <div className="flex items-center gap-2 text-meta mb-2">
               <Flame className="w-4 h-4 text-orange-500" /> STREAK
             </div>
-            <div className="text-display text-white"><AnimatedNumber value={streak} /></div>
+            <div className="text-display text-white"><ScrambleNumber value={streak} /></div>
           </motion.div>
           <motion.div whileHover={hoverEffect} className="flex flex-col items-start surface-float px-6 py-5 min-w-[140px] flex-1 md:flex-none">
             <div className="flex items-center gap-2 text-meta mb-2">
               <Zap className="w-4 h-4 text-yellow-500" /> CALORIES
             </div>
-            <div className="text-display text-white"><AnimatedNumber value={totalCalories} /></div>
+            <div className="text-display text-white"><ScrambleNumber value={totalCalories} /></div>
           </motion.div>
         </div>
       </motion.div>
@@ -270,75 +260,71 @@ export function ExerciseSelector({
           </motion.div>
 
           {/* Start Exercises Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-            <motion.button
-              variants={cardEntrance}
-              whileHover={hoverEffect}
-              whileTap={tapEffect}
-              onClick={() => handleSelect('squat')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
-            >
-              {recentWorkouts[0]?.exercise === 'squat' && (
-                <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-blue-500/20">LAST</div>
-              )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-blue-500/10 group-hover:border-blue-500/30'}`}>
-                <Trophy className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'text-white' : 'text-blue-500 group-hover:text-blue-400'}`} />
-              </div>
-              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-blue-400 transition-colors">Squats</h2>
-              <p className="text-body text-xs group-hover:text-blue-200 transition-colors">Lower body power</p>
-            </motion.button>
+          <motion.div variants={staggerContainer} className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+            <motion.div variants={cardEntrance} whileTap={tapEffect}>
+              <SpotlightCard
+                onClick={() => handleSelect('squat')}
+                className={`flex flex-col items-center surface-raised p-6 text-center h-full group ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : ''}`}
+              >
+                {recentWorkouts[0]?.exercise === 'squat' && (
+                  <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-blue-500/20 z-30">LAST</div>
+                )}
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'squat' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-blue-500/10 group-hover:border-blue-500/30'}`}>
+                  <Trophy className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'text-white' : 'text-blue-500 group-hover:text-blue-400'}`} />
+                </div>
+                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-blue-400 transition-colors z-30 relative">Squats</h2>
+                <p className="text-body text-xs group-hover:text-blue-200 transition-colors z-30 relative">Lower body power</p>
+              </SpotlightCard>
+            </motion.div>
             
-            <motion.button
-              variants={cardEntrance}
-              whileHover={hoverEffect}
-              whileTap={tapEffect}
-              onClick={() => handleSelect('pushup')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/50 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : 'hover:border-orange-500/50 hover:shadow-[0_0_40px_rgba(249,115,22,0.2)]'}`}
-            >
-              {recentWorkouts[0]?.exercise === 'pushup' && (
-                <div className="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-orange-500/20">LAST</div>
-              )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-orange-500/10 group-hover:border-orange-500/30'}`}>
-                <Flame className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'text-white' : 'text-orange-500 group-hover:text-orange-400'}`} />
-              </div>
-              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-orange-400 transition-colors">Push-ups</h2>
-              <p className="text-body text-xs group-hover:text-orange-200 transition-colors">Upper body strength</p>
-            </motion.button>
+            <motion.div variants={cardEntrance} whileTap={tapEffect}>
+              <SpotlightCard
+                onClick={() => handleSelect('pushup')}
+                className={`flex flex-col items-center surface-raised p-6 text-center h-full group ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/50 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : ''}`}
+              >
+                {recentWorkouts[0]?.exercise === 'pushup' && (
+                  <div className="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-orange-500/20 z-30">LAST</div>
+                )}
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'pushup' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-orange-500/10 group-hover:border-orange-500/30'}`}>
+                  <Flame className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'text-white' : 'text-orange-500 group-hover:text-orange-400'}`} />
+                </div>
+                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-orange-400 transition-colors z-30 relative">Push-ups</h2>
+                <p className="text-body text-xs group-hover:text-orange-200 transition-colors z-30 relative">Upper body strength</p>
+              </SpotlightCard>
+            </motion.div>
 
-            <motion.button
-              variants={cardEntrance}
-              whileHover={hoverEffect}
-              whileTap={tapEffect}
-              onClick={() => handleSelect('jumping_jack')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 'hover:border-green-500/50 hover:shadow-[0_0_40px_rgba(34,197,94,0.2)]'}`}
-            >
-              {recentWorkouts[0]?.exercise === 'jumping_jack' && (
-                <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-green-500/20">LAST</div>
-              )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-green-500/10 group-hover:border-green-500/30'}`}>
-                <Activity className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'text-white' : 'text-green-500 group-hover:text-green-400'}`} />
-              </div>
-              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-green-400 transition-colors">Jacks</h2>
-              <p className="text-body text-xs group-hover:text-green-200 transition-colors">Cardio & agility</p>
-            </motion.button>
+            <motion.div variants={cardEntrance} whileTap={tapEffect}>
+              <SpotlightCard
+                onClick={() => handleSelect('jumping_jack')}
+                className={`flex flex-col items-center surface-raised p-6 text-center h-full group ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : ''}`}
+              >
+                {recentWorkouts[0]?.exercise === 'jumping_jack' && (
+                  <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-green-500/20 z-30">LAST</div>
+                )}
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-green-500/10 group-hover:border-green-500/30'}`}>
+                  <Activity className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'text-white' : 'text-green-500 group-hover:text-green-400'}`} />
+                </div>
+                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-green-400 transition-colors z-30 relative">Jacks</h2>
+                <p className="text-body text-xs group-hover:text-green-200 transition-colors z-30 relative">Cardio & agility</p>
+              </SpotlightCard>
+            </motion.div>
 
-            <motion.button
-              variants={cardEntrance}
-              whileHover={hoverEffect}
-              whileTap={tapEffect}
-              onClick={() => handleSelect('plank')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'hover:border-purple-500/50 hover:shadow-[0_0_40px_rgba(168,85,247,0.2)]'}`}
-            >
-              {recentWorkouts[0]?.exercise === 'plank' && (
-                <div className="absolute top-0 right-0 bg-purple-500/20 text-purple-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-purple-500/20">LAST</div>
-              )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-purple-500/10 group-hover:border-purple-500/30'}`}>
-                <Shield className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'text-white' : 'text-purple-500 group-hover:text-purple-400'}`} />
-              </div>
-              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-purple-400 transition-colors">Plank</h2>
-              <p className="text-body text-xs group-hover:text-purple-200 transition-colors">Core stability</p>
-            </motion.button>
-          </div>
+            <motion.div variants={cardEntrance} whileTap={tapEffect}>
+              <SpotlightCard
+                onClick={() => handleSelect('plank')}
+                className={`flex flex-col items-center surface-raised p-6 text-center h-full group ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : ''}`}
+              >
+                {recentWorkouts[0]?.exercise === 'plank' && (
+                  <div className="absolute top-0 right-0 bg-purple-500/20 text-purple-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-purple-500/20 z-30">LAST</div>
+                )}
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'plank' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-purple-500/10 group-hover:border-purple-500/30'}`}>
+                  <Shield className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'text-white' : 'text-purple-500 group-hover:text-purple-400'}`} />
+                </div>
+                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-purple-400 transition-colors z-30 relative">Plank</h2>
+                <p className="text-body text-xs group-hover:text-purple-200 transition-colors z-30 relative">Core stability</p>
+              </SpotlightCard>
+            </motion.div>
+          </motion.div>
           
           {/* Heatmap */}
           <motion.div variants={cardEntrance} className="surface-raised p-8 mt-4">

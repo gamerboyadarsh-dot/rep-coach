@@ -259,12 +259,33 @@ function App() {
       }, 1000);
     }
   }, [landmarks, exercise, appState, goal, stopCamera]);
+  // Determine Aurora theme based on current exercise
+  const auroraVars = React.useMemo(() => {
+    if (appState !== 'workout') return {} as React.CSSProperties;
+    switch (exercise) {
+      case 'squat': // Purple/Blue
+        return { '--aurora-c1': '168, 85, 247', '--aurora-c2': '59, 130, 246', '--aurora-c3': '139, 92, 246' } as React.CSSProperties;
+      case 'pushups': // Intense Red/Orange
+        return { '--aurora-c1': '239, 68, 68', '--aurora-c2': '249, 115, 22', '--aurora-c3': '220, 38, 38' } as React.CSSProperties;
+      case 'jumping_jacks': // Cyan/Green
+        return { '--aurora-c1': '14, 165, 233', '--aurora-c2': '34, 197, 94', '--aurora-c3': '6, 182, 212' } as React.CSSProperties;
+      default:
+        return {} as React.CSSProperties;
+    }
+  }, [appState, exercise]);
 
   return (
     <ErrorBoundary>
       <Suspense fallback={<FullScreenLoader />}>
-        <div className="flex flex-col min-h-screen bg-slate-950 text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
+        <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-blue-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
           
+          {/* Global Aurora Background */}
+          <div className="aurora-bg">
+            <div className="aurora-orb aurora-orb-1" />
+            <div className="aurora-orb aurora-orb-2" />
+            <div className="aurora-orb aurora-orb-3" />
+            <div className="noise-overlay" />
+          </div>
           {/* Navigation Bar */}
           {appState !== 'auth' && appState !== 'workout' && (
             <nav className="fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none">

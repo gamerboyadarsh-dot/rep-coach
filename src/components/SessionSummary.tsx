@@ -6,6 +6,7 @@ import { processWorkout, type Badge } from '../lib/achievements';
 import { motion } from 'framer-motion';
 import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame, Share2 } from 'lucide-react';
 import { saveGhostChallenge } from '../lib/ghostChallenges';
+import { ScrambleNumber } from './ScrambleNumber';
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60);
@@ -76,12 +77,33 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           setIsNewPR(result.isNewPR);
 
           if (result.badges.length > 0 || formScore >= 80 || result.isNewPR) {
-            confetti({
-              particleCount: 150,
-              spread: 80,
-              origin: { y: 0.6 },
-              colors: ['#3b82f6', '#8b5cf6', '#fbbf24']
-            });
+            // Hyper-Realistic Ember Explosion
+            const duration = 2500;
+            const end = Date.now() + duration;
+            
+            const frame = () => {
+              confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 },
+                colors: ['#f97316', '#ef4444', '#eab308'],
+                zIndex: 2000
+              });
+              confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 },
+                colors: ['#f97316', '#ef4444', '#eab308'],
+                zIndex: 2000
+              });
+              
+              if (Date.now() < end) {
+                requestAnimationFrame(frame);
+              }
+            };
+            frame();
             
             if (navigator.vibrate) {
               navigator.vibrate([200, 100, 200]);
@@ -251,13 +273,13 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-400" /> {exercise === 'plank' ? 'Hold (s)' : 'Reps'}
             </div>
-            <div className="text-4xl font-black text-white">{totalReps}</div>
+            <div className="text-4xl font-black text-white"><ScrambleNumber value={totalReps} /></div>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
               <CheckCircle2 className={`w-4 h-4 ${scoreColor}`} /> Form
             </div>
-            <div className={`text-4xl font-black ${scoreColor}`}>{formScore}%</div>
+            <div className={`text-4xl font-black ${scoreColor}`}><ScrambleNumber value={formScore} />%</div>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
@@ -269,7 +291,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
               <Flame className="w-4 h-4 text-orange-400" /> Cals
             </div>
-            <div className="text-4xl font-black text-white">{sessionCalories}</div>
+            <div className="text-4xl font-black text-white"><ScrambleNumber value={sessionCalories} /></div>
           </div>
         </div>
         

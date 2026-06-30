@@ -22,7 +22,7 @@ export const pageTransition: Variants = {
   }
 };
 
-export const cardEntrance: Variants = {
+export const cardEntrance: any = {
   initial: { opacity: 0, y: 15, scale: 0.97 },
   animate: { 
     opacity: 1, 
@@ -48,7 +48,7 @@ export const staggerContainer: Variants = {
   }
 };
 
-export const hoverEffect = {
+export const hoverEffect: any = {
   y: -2,
   scale: 1.01,
   transition: { 
@@ -58,7 +58,7 @@ export const hoverEffect = {
   }
 };
 
-export const tapEffect = {
+export const tapEffect: any = {
   scale: 0.97,
   y: 0,
   transition: { 

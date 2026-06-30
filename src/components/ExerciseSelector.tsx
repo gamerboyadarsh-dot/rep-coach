@@ -140,6 +140,7 @@ export function ExerciseSelector({
           </div>
           <div className="flex-1">
             <h2 className="text-display text-white mb-1 tracking-tight">Welcome back, {username}</h2>
+            <p className="text-section text-blue-400 mb-1">Ready to crush your goals today?</p>
             <p className="text-body text-slate-400">{rank.title} • {xp} XP</p>
             {isGuest && (
               <div className="mt-3 text-xs bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-full border border-amber-500/20 inline-flex items-center">
@@ -281,16 +282,16 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('squat')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/30' : 'hover:border-white/20'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'squat' && (
                 <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-blue-500/20">LAST</div>
               )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'icon-container-active' : 'icon-container-premium'}`}>
-                <Trophy className={`w-7 h-7 ${recentWorkouts[0]?.exercise === 'squat' ? 'text-white' : 'text-blue-500'}`} />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-blue-500/10 group-hover:border-blue-500/30'}`}>
+                <Trophy className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'text-white' : 'text-blue-500 group-hover:text-blue-400'}`} />
               </div>
-              <h2 className="text-lg font-bold mb-1 text-white">Squats</h2>
-              <p className="text-body text-xs">Lower body power</p>
+              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-blue-400 transition-colors">Squats</h2>
+              <p className="text-body text-xs group-hover:text-blue-200 transition-colors">Lower body power</p>
             </motion.button>
             
             <motion.button
@@ -298,16 +299,16 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('pushup')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/30' : 'hover:border-white/20'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/50 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : 'hover:border-orange-500/50 hover:shadow-[0_0_40px_rgba(249,115,22,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'pushup' && (
                 <div className="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-orange-500/20">LAST</div>
               )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'icon-container-active' : 'icon-container-premium'}`}>
-                <Flame className={`w-7 h-7 ${recentWorkouts[0]?.exercise === 'pushup' ? 'text-white' : 'text-orange-500'}`} />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-orange-500/10 group-hover:border-orange-500/30'}`}>
+                <Flame className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'text-white' : 'text-orange-500 group-hover:text-orange-400'}`} />
               </div>
-              <h2 className="text-lg font-bold mb-1 text-white">Push-ups</h2>
-              <p className="text-body text-xs">Upper body strength</p>
+              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-orange-400 transition-colors">Push-ups</h2>
+              <p className="text-body text-xs group-hover:text-orange-200 transition-colors">Upper body strength</p>
             </motion.button>
 
             <motion.button
@@ -315,16 +316,16 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('jumping_jack')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/30' : 'hover:border-white/20'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 'hover:border-green-500/50 hover:shadow-[0_0_40px_rgba(34,197,94,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'jumping_jack' && (
                 <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-green-500/20">LAST</div>
               )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'icon-container-active' : 'icon-container-premium'}`}>
-                <Activity className={`w-7 h-7 ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'text-white' : 'text-green-500'}`} />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-green-500/10 group-hover:border-green-500/30'}`}>
+                <Activity className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'text-white' : 'text-green-500 group-hover:text-green-400'}`} />
               </div>
-              <h2 className="text-lg font-bold mb-1 text-white">Jacks</h2>
-              <p className="text-body text-xs">Cardio & agility</p>
+              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-green-400 transition-colors">Jacks</h2>
+              <p className="text-body text-xs group-hover:text-green-200 transition-colors">Cardio & agility</p>
             </motion.button>
 
             <motion.button
@@ -332,16 +333,16 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('plank')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/30' : 'hover:border-white/20'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'hover:border-purple-500/50 hover:shadow-[0_0_40px_rgba(168,85,247,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'plank' && (
                 <div className="absolute top-0 right-0 bg-purple-500/20 text-purple-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-purple-500/20">LAST</div>
               )}
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'icon-container-active' : 'icon-container-premium'}`}>
-                <Shield className={`w-7 h-7 ${recentWorkouts[0]?.exercise === 'plank' ? 'text-white' : 'text-purple-500'}`} />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-purple-500/10 group-hover:border-purple-500/30'}`}>
+                <Shield className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'text-white' : 'text-purple-500 group-hover:text-purple-400'}`} />
               </div>
-              <h2 className="text-lg font-bold mb-1 text-white">Plank</h2>
-              <p className="text-body text-xs">Core stability</p>
+              <h2 className="text-lg font-bold mb-1 text-white group-hover:text-purple-400 transition-colors">Plank</h2>
+              <p className="text-body text-xs group-hover:text-purple-200 transition-colors">Core stability</p>
             </motion.button>
           </div>
           

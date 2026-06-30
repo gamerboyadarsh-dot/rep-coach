@@ -357,17 +357,17 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
               
               {/* Camera Picker */}
               <div className="surface-float p-6 border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Video className="w-5 h-5 text-blue-400" />
-                  <div>
-                    <h4 className="text-white font-bold">Default Camera</h4>
-                    <p className="text-xs text-slate-400">Select which camera to use</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <Video className="w-5 h-5 text-blue-400 shrink-0" />
+                  <div className="truncate">
+                    <h4 className="text-white font-bold truncate">Default Camera</h4>
+                    <p className="text-xs text-slate-400 truncate">Select which camera to use</p>
                   </div>
                 </div>
                 <select 
                   value={selectedCamera}
                   onChange={handleCameraChange}
-                  className="bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500 shadow-inner"
+                  className="w-full sm:w-auto max-w-full sm:max-w-[200px] lg:max-w-[220px] bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500 shadow-inner truncate shrink-0"
                 >
                   {cameras.length === 0 ? (
                     <option value="">No cameras found</option>
@@ -383,17 +383,17 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
 
               {/* Coach Personality Picker */}
               <div className="surface-float p-6 border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Mic className="w-5 h-5 text-pink-400" />
-                  <div>
-                    <h4 className="text-white font-bold">Coach Personality</h4>
-                    <p className="text-xs text-slate-400">Choose your AI's tone</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <Mic className="w-5 h-5 text-pink-400 shrink-0" />
+                  <div className="truncate">
+                    <h4 className="text-white font-bold truncate">Coach Personality</h4>
+                    <p className="text-xs text-slate-400 truncate">Choose your AI's tone</p>
                   </div>
                 </div>
                 <select 
                   value={coachPersonality}
                   onChange={handlePersonalityChange}
-                  className="bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-pink-500 shadow-inner"
+                  className="w-full sm:w-auto max-w-full sm:max-w-[200px] lg:max-w-[220px] bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-pink-500 shadow-inner truncate shrink-0"
                 >
                   <option value="supportive">Supportive Coach 🧘‍♀️</option>
                   <option value="drill_sergeant">Drill Sergeant 🪖</option>

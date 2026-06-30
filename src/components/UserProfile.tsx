@@ -144,6 +144,17 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
     ? (weight / ((height / 100) * (height / 100))).toFixed(1)
     : null;
 
+  const getBmiCategory = (b: number) => {
+    if (b < 18.5) return { label: 'Underweight', color: 'text-blue-400', dot: 'bg-blue-400', glow: 'shadow-[0_0_10px_rgba(59,130,246,0.8)]' };
+    if (b < 25) return { label: 'Healthy Weight', color: 'text-green-400', dot: 'bg-green-400', glow: 'shadow-[0_0_10px_rgba(34,197,94,0.8)]' };
+    if (b < 30) return { label: 'Overweight', color: 'text-yellow-400', dot: 'bg-yellow-400', glow: 'shadow-[0_0_10px_rgba(234,179,8,0.8)]' };
+    return { label: 'Obese', color: 'text-red-500', dot: 'bg-red-500', glow: 'shadow-[0_0_10px_rgba(239,68,68,0.8)]' };
+  };
+
+  const bmiNum = bmi ? Number(bmi) : 0;
+  const bmiPercent = Math.min(Math.max(((bmiNum - 15) / 25) * 100, 0), 100);
+  const bmiCat = bmiNum ? getBmiCategory(bmiNum) : null;
+
   const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedCamera(id);
@@ -347,10 +358,45 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                     />
                   </div>
                 </div>
-                {bmi && (
-                  <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20 flex items-center justify-between">
-                    <div className="text-sm text-white font-bold">BMI: <span className="text-green-400">{bmi}</span></div>
-                    <div className="text-[10px] text-green-400/80 font-bold uppercase tracking-widest">Indicator</div>
+                {bmi && bmiCat && (
+                  <div className="mt-2 p-5 bg-slate-900/50 rounded-xl border border-white/5 relative overflow-hidden">
+                    <div className="flex justify-between items-end mb-4">
+                      <div>
+                        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Your BMI</div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-white leading-none">{bmi}</span>
+                          <span className={`text-sm font-bold ${bmiCat.color}`}>{bmiCat.label}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bar Container */}
+                    <div className="relative mt-2">
+                      <div className="relative h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+                        <div 
+                          className="absolute inset-0 w-full h-full opacity-80"
+                          style={{
+                            background: 'linear-gradient(to right, #3b82f6 0%, #3b82f6 14%, #22c55e 14%, #22c55e 40%, #eab308 40%, #eab308 60%, #ef4444 60%, #ef4444 100%)'
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Indicator Thumb */}
+                      <div 
+                        className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
+                        style={{ left: `calc(${bmiPercent}% - 8px)` }}
+                      >
+                        <div className={`w-4 h-4 rounded-full border-2 border-white ${bmiCat.dot} ${bmiCat.glow} shadow-xl transform hover:scale-125 transition-transform`} />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-3">
+                      <span>15.0</span>
+                      <span>18.5</span>
+                      <span>25.0</span>
+                      <span>30.0</span>
+                      <span>40.0</span>
+                    </div>
                   </div>
                 )}
               </div>

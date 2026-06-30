@@ -147,7 +147,11 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
 
           <AnimatePresence>
             {streak > 1 && (
-              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="flex items-center gap-2 surface-float border border-orange-500/50 rounded-full px-5 py-2 pointer-events-auto shadow-[0_0_15px_rgba(249,115,22,0.2)]">
+              <motion.div 
+                initial={{ y: 20, scale: 0.9, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1, transition: { type: "spring", stiffness: 400, damping: 25 } as any }}
+                exit={{ scale: 0.9, y: -20, opacity: 0, transition: { type: "spring", stiffness: 400, damping: 25 } as any }}
+                className="flex items-center gap-2 surface-float border border-orange-500/50 rounded-full px-5 py-2 pointer-events-auto shadow-[0_0_15px_rgba(249,115,22,0.2)]">
               <Flame className="w-5 h-5 text-orange-400 animate-pulse" />
               <div className="flex flex-col">
                 <div className="text-meta text-orange-400/80 mb-0.5">Combo</div>
@@ -241,9 +245,13 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           </div>
 
           <div className="flex items-baseline justify-center gap-2 w-full relative z-10">
-            <div className={`text-7xl md:text-[8rem] font-black tracking-tighter transition-all duration-200 ${flash ? 'text-white scale-110 drop-shadow-[0_0_30px_rgba(59,130,246,1)]' : 'text-hero-gradient'}`} style={{ lineHeight: '1' }}>
+            <motion.div
+                initial={{ y: 20, scale: 0.9, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1, transition: { type: "spring", stiffness: 400, damping: 25 } as any }}
+                exit={{ scale: 0.9, y: -20, opacity: 0, transition: { type: "spring", stiffness: 400, damping: 25 } as any }}
+                className={`text-7xl md:text-[8rem] font-black tracking-tighter transition-all duration-200 ${flash ? 'text-white scale-110 drop-shadow-[0_0_30px_rgba(59,130,246,1)]' : 'text-hero-gradient'}`} style={{ lineHeight: '1' }}>
               {repCount}
-            </div>
+            </motion.div>
             {goal && (
               <div className="text-3xl font-bold text-slate-500 ml-2">
                 / {goal}

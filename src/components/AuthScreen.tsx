@@ -90,7 +90,7 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
       <motion.div 
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 } as any}
         className="w-full max-w-md surface-raised p-8 sm:p-12 relative overflow-hidden"
       >
         

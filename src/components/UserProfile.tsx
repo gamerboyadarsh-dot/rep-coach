@@ -410,7 +410,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                   </div>
                 </div>
                 <div onClick={toggleVoiceSetting} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${voiceEnabled ? 'bg-green-600' : 'bg-slate-900'}`}>
-                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 }} className={`w-5 h-5 rounded-full bg-white shadow-md ${voiceEnabled ? 'ml-auto' : ''}`}></motion.div>
+                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 } as any} className={`w-5 h-5 rounded-full bg-white shadow-md ${voiceEnabled ? 'ml-auto' : ''}`}></motion.div>
                 </div>
               </div>
 
@@ -424,7 +424,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                   </div>
                 </div>
                 <div onClick={toggleTheme} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${isLightMode ? 'bg-blue-600' : 'bg-slate-900'}`}>
-                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 }} className={`w-5 h-5 rounded-full bg-white shadow-md ${isLightMode ? 'ml-auto' : ''}`}></motion.div>
+                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 } as any} className={`w-5 h-5 rounded-full bg-white shadow-md ${isLightMode ? 'ml-auto' : ''}`}></motion.div>
                 </div>
               </div>
 
@@ -438,7 +438,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                   </div>
                 </div>
                 <div onClick={toggleNotifications} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${notificationsEnabled ? 'bg-blue-600' : 'bg-slate-900'}`}>
-                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 }} className={`w-5 h-5 rounded-full bg-white shadow-md ${notificationsEnabled ? 'ml-auto' : ''}`}></motion.div>
+                  <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 } as any} className={`w-5 h-5 rounded-full bg-white shadow-md ${notificationsEnabled ? 'ml-auto' : ''}`}></motion.div>
                 </div>
               </div>
 

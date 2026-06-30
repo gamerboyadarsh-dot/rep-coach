@@ -282,7 +282,7 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('squat')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'squat' ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'squat' && (
                 <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-blue-500/20">LAST</div>
@@ -299,7 +299,7 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('pushup')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/50 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : 'hover:border-orange-500/50 hover:shadow-[0_0_40px_rgba(249,115,22,0.2)]'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'pushup' ? 'border-orange-500/50 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : 'hover:border-orange-500/50 hover:shadow-[0_0_40px_rgba(249,115,22,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'pushup' && (
                 <div className="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-orange-500/20">LAST</div>
@@ -316,7 +316,7 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('jumping_jack')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 'hover:border-green-500/50 hover:shadow-[0_0_40px_rgba(34,197,94,0.2)]'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 'hover:border-green-500/50 hover:shadow-[0_0_40px_rgba(34,197,94,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'jumping_jack' && (
                 <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-green-500/20">LAST</div>
@@ -333,7 +333,7 @@ export function ExerciseSelector({
               whileHover={hoverEffect}
               whileTap={tapEffect}
               onClick={() => handleSelect('plank')}
-              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'hover:border-purple-500/50 hover:shadow-[0_0_40px_rgba(168,85,247,0.2)]'}`}
+              className={`flex flex-col items-center surface-raised p-6 text-center transition-all group relative overflow-hidden hover-shimmer ${recentWorkouts[0]?.exercise === 'plank' ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'hover:border-purple-500/50 hover:shadow-[0_0_40px_rgba(168,85,247,0.2)]'}`}
             >
               {recentWorkouts[0]?.exercise === 'plank' && (
                 <div className="absolute top-0 right-0 bg-purple-500/20 text-purple-400 text-meta px-3 py-1 rounded-bl-lg border-b border-l border-purple-500/20">LAST</div>

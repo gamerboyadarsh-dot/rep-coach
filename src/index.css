@@ -147,6 +147,39 @@ body {
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
+/* High-Tech Shimmer/Glare Effect */
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-150%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.hover-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-150%) skewX(-15deg);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.group:hover .hover-shimmer::after,
+.hover-shimmer:hover::after {
+  animation: shimmerSweep 0.8s ease-out;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

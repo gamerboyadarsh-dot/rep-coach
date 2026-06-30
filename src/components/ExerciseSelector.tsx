@@ -32,12 +32,6 @@ interface Props {
   onToggleRhythmMode?: () => void;
 }
 
-function formatDuration(sec: number) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
 export function ExerciseSelector({ 
   userId, isGuest, username, onSelect, onPhotoUpdate, 
   isListening = false, voiceControlEnabled = false, onToggleVoiceControl,
@@ -135,13 +129,13 @@ export function ExerciseSelector({
               </div>
             )}
             <div className="absolute -bottom-3 -right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-lg border border-white/20 shadow-lg">
-              Lv {rank.level}
+              Lv {Math.floor(xp / 100) + 1}
             </div>
           </div>
           <div className="flex-1">
             <h2 className="text-display text-white mb-1 tracking-tight">Welcome back, {username}</h2>
             <p className="text-section text-blue-400 mb-1">Ready to crush your goals today?</p>
-            <p className="text-body text-slate-400">{rank.title} • {xp} XP</p>
+            <p className="text-body text-slate-400">{rank.name} • {xp} XP</p>
             {isGuest && (
               <div className="mt-3 text-xs bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-full border border-amber-500/20 inline-flex items-center">
                 Guest Mode — Data saves locally

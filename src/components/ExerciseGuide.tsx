@@ -3,6 +3,8 @@ import { sfx } from '../lib/sounds';
 import { BookOpen, CheckCircle2, Activity, Image as ImageIcon } from 'lucide-react';
 import Model from 'react-body-highlighter';
 import type { IExerciseData } from 'react-body-highlighter';
+import { motion } from 'framer-motion';
+import { pageTransition, staggerContainer, cardEntrance, tapEffect } from '../lib/animations';
 
 type GuideTab = 'squat' | 'pushup' | 'jumping_jack' | 'plank';
 
@@ -72,91 +74,100 @@ export function ExerciseGuide() {
   const data = content[activeTab];
 
   return (
-    <div className="flex flex-col items-center min-h-screen pt-28 pb-12 px-6 relative z-10 overflow-y-auto w-full">
+    <motion.div 
+      variants={pageTransition} 
+      initial="initial" 
+      animate="animate" 
+      exit="exit" 
+      className="flex flex-col items-center min-h-screen pt-28 pb-12 px-6 relative z-10 w-full"
+    >
       <div className="w-full max-w-6xl mx-auto">
         
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <BookOpen className="w-8 h-8 text-blue-500" />
-          <h1 className="text-4xl font-black text-white tracking-tight">Databank</h1>
+        <div className="flex items-center justify-center gap-4 mb-12">
+          <div className="icon-container-active w-16 h-16 rounded-2xl flex items-center justify-center">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-display text-white tracking-tight">Databank</h1>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap justify-center gap-4 mb-10">
+        <div className="flex flex-wrap justify-center gap-3 mb-12 surface-raised p-2 rounded-2xl max-w-fit mx-auto border border-white/5">
           {[
             { id: 'squat', label: 'Squats' },
             { id: 'pushup', label: 'Push-ups' },
             { id: 'jumping_jack', label: 'Jumping Jacks' },
             { id: 'plank', label: 'Plank' }
           ].map(tab => (
-            <button 
+            <motion.button 
               key={tab.id}
+              whileTap={tapEffect}
               onClick={() => handleTab(tab.id as GuideTab)}
-              className={`px-6 py-3 rounded-2xl font-bold transition-all shadow-lg ${
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${
                 activeTab === tab.id 
-                  ? 'bg-blue-600 text-white shadow-blue-500/25 scale-105' 
-                  : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50 hover:border-slate-600'
+                  ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Instructions Column */}
           <div className="lg:col-span-5 flex flex-col gap-6">
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-8 rounded-3xl shadow-2xl">
-              <h2 className="text-3xl font-bold text-white mb-2">{data.title}</h2>
-              <p className="text-blue-400 font-semibold mb-8 uppercase tracking-widest text-sm">{data.subtitle}</p>
+            <motion.div variants={cardEntrance} className="surface-raised p-8 md:p-10">
+              <h2 className="text-section mb-2">{data.title}</h2>
+              <p className="text-meta text-blue-400 mb-8">{data.subtitle}</p>
               
               <div className="space-y-6">
                 {data.instructions.map((inst, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div className="shrink-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-bold text-sm">
+                  <div key={i} className="flex gap-4 items-start group">
+                    <div className="shrink-0 w-8 h-8 rounded-full surface-float flex items-center justify-center text-blue-400 font-bold text-sm border border-white/5 group-hover:border-blue-500/50 transition-colors shadow-inner">
                       {i + 1}
                     </div>
-                    <p className="text-slate-300 leading-relaxed pt-1">{inst}</p>
+                    <p className="text-body pt-1 group-hover:text-slate-200 transition-colors">{inst}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-6 rounded-3xl flex items-start gap-4 shadow-lg">
+            <motion.div variants={cardEntrance} className="surface-float p-6 flex items-start gap-4 border border-blue-500/20 shadow-[0_4px_20px_rgba(37,99,235,0.1)]">
               <CheckCircle2 className="w-6 h-6 text-blue-400 shrink-0" />
               <div>
                 <h4 className="text-white font-bold mb-1">AI Coach Tip</h4>
-                <p className="text-sm text-slate-400 leading-relaxed">Ensure you perform these movements at a controlled pace. The AI model tracks your joint angles and velocity—rushing through reps may cause the tracking confidence to drop.</p>
+                <p className="text-xs text-body leading-relaxed">Ensure you perform these movements at a controlled pace. The AI model tracks your joint angles and velocity—rushing through reps may cause the tracking confidence to drop.</p>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Images Column */}
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-8 left-8 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-white font-bold tracking-widest flex items-center gap-2 z-10 shadow-lg transition-transform group-hover:-translate-y-1">
-                <ImageIcon className="w-3 h-3 text-blue-400" /> FORM_ANALYSIS.JPG
+            <motion.div variants={cardEntrance} className="surface-raised p-2 overflow-hidden group">
+              <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-900 border border-white/5 flex items-center justify-center">
+                <div className="absolute top-4 left-4 surface-float px-3 py-1.5 rounded-lg border border-white/10 text-meta flex items-center gap-2 z-10 shadow-xl transition-transform group-hover:-translate-y-1">
+                  <ImageIcon className="w-3 h-3 text-blue-400" /> FORM_ANALYSIS
+                </div>
+                <img src={data.formImage} alt={`${data.title} Form`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-700 ease-[0.22,1,0.36,1]" />
               </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 aspect-video flex items-center justify-center">
-                <img src={data.formImage} alt={`${data.title} Form`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-500" />
-              </div>
-            </div>
+            </motion.div>
             
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-8 left-8 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-white font-bold tracking-widest flex items-center gap-2 z-10 shadow-lg transition-transform group-hover:-translate-y-1">
-                <Activity className="w-3 h-3 text-purple-400" /> INTERACTIVE_TARGETS
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800 flex items-center justify-center p-4">
-                <div className="w-full flex justify-around opacity-90 group-hover:opacity-100 transition-opacity duration-500 max-h-[300px]">
-                  <Model data={data.muscles} type="anterior" style={{ width: '120px', padding: '1rem' }} highlightedColors={['#0ea5e9']} />
-                  <Model data={data.muscles} type="posterior" style={{ width: '120px', padding: '1rem' }} highlightedColors={['#8b5cf6']} />
+            <motion.div variants={cardEntrance} className="surface-raised p-2 overflow-hidden group">
+              <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center p-8 min-h-[300px]">
+                <div className="absolute top-4 left-4 surface-float px-3 py-1.5 rounded-lg border border-white/10 text-meta flex items-center gap-2 z-10 shadow-xl transition-transform group-hover:-translate-y-1">
+                  <Activity className="w-3 h-3 text-purple-400" /> INTERACTIVE_TARGETS
+                </div>
+                <div className="w-full flex justify-around opacity-80 group-hover:opacity-100 transition-opacity duration-700 ease-[0.22,1,0.36,1]">
+                  <Model data={data.muscles} type="anterior" style={{ width: '140px' }} highlightedColors={['#3b82f6']} />
+                  <Model data={data.muscles} type="posterior" style={{ width: '140px' }} highlightedColors={['#a855f7']} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
           
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -60,6 +60,11 @@ Front/rear camera switching uses actual device enumeration (`enumerateDevices`) 
 **Exercise Databank**
 Each exercise has a realistic reference photo, step-by-step form instructions, and an interactive front/back muscle-engagement diagram that highlights which muscles you've been working, color-coded by how often you've trained them.
 
+**Premium UI/UX Elements (NEW)**
+- **Dynamic Aurora Backgrounds:** The application's ambient animated background dynamically shifts its color palette to match your selected exercise (e.g., Intense Red/Orange for Pushups, Energizing Cyan/Green for Jumping Jacks, Deep Purple for Squats).
+- **Interactive Glowing BMI Visualizer:** A stunning, interactive BMI scale in the user profile that visually pulses and highlights your health category with vibrant neon colors.
+- **Tuned AI Biomechanics:** Push-up detection thresholds are explicitly tuned for real-world 2D webcam usage, ensuring flawless rep tracking even from tough floor angles.
+
 **Light/Dark Theme**
 Instant theme toggle.
 

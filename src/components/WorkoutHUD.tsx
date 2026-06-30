@@ -4,6 +4,8 @@ import { FormFeedback } from './FormFeedback';
 import { sfx } from '../lib/sounds';
 import { Target, Activity, Flame, XOctagon, CheckCircle2, Volume2, VolumeX, Ghost, Mic, MicOff } from 'lucide-react';
 import type { GhostData } from '../lib/ghostChallenges';
+import { motion, AnimatePresence } from 'framer-motion';
+import { pageTransition, staggerContainer, cardEntrance, tapEffect, hoverEffect } from '../lib/animations';
 
 interface Props {
   exercise: ExerciseType;
@@ -117,71 +119,79 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
   })();
 
   return (
-    <div className="absolute inset-0 z-50 pointer-events-none transition-all duration-300">
+    <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-50 pointer-events-none transition-all duration-300">
       {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex flex-col md:flex-row gap-4 justify-between items-start">
+      <motion.div variants={staggerContainer} className="absolute top-0 left-0 right-0 p-4 md:p-6 flex flex-col md:flex-row gap-4 justify-between items-start">
         <div className="flex gap-3 flex-wrap">
           
-          <div className={`flex flex-col justify-center bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-4 py-2 pointer-events-auto transition-all ${isCombo ? 'shadow-[0_0_20px_rgba(249,115,22,0.3)] border-orange-500/50 scale-105' : 'shadow-lg'}`}>
-            <div className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Program</div>
-            <div className="text-sm md:text-base font-black text-white uppercase tracking-wide drop-shadow-md">
+          <motion.div variants={cardEntrance} className={`flex flex-col justify-center surface-float rounded-full px-5 py-2 pointer-events-auto transition-all border shadow-lg ${isCombo ? 'shadow-[0_0_20px_rgba(249,115,22,0.3)] border-orange-500/50 scale-105' : 'border-white/5 hover:border-white/20'}`}>
+            <div className="text-meta mb-0.5">Program</div>
+            <div className="text-sm font-bold text-white tracking-wide capitalize">
               {exercise.replaceAll('_', ' ')}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-4 py-2 pointer-events-auto shadow-lg">
+          <motion.div variants={cardEntrance} className="flex items-center gap-3 surface-float rounded-full px-5 py-2 pointer-events-auto border border-white/5 hover:border-white/20 shadow-lg">
             {hasGoodForm ? (
               <CheckCircle2 className="w-5 h-5 text-blue-400" />
             ) : (
-              <XOctagon className="w-5 h-5 text-red-400" />
+              <XOctagon className="w-5 h-5 text-red-400 animate-pulse" />
             )}
             <div className="flex flex-col">
-              <div className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Form</div>
-              <div className={`text-sm md:text-base font-black uppercase tracking-wide drop-shadow-md ${hasGoodForm ? 'text-blue-400' : 'text-red-400'}`}>
+              <div className="text-meta mb-0.5">Form</div>
+              <div className={`text-sm font-bold tracking-wide ${hasGoodForm ? 'text-blue-400' : 'text-red-400'}`}>
                 {hasGoodForm ? 'Optimal' : 'Check Form'}
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {streak > 1 && (
-            <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl px-4 py-2 pointer-events-auto shadow-lg">
+          <AnimatePresence>
+            {streak > 1 && (
+              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="flex items-center gap-2 surface-float border border-orange-500/50 rounded-full px-5 py-2 pointer-events-auto shadow-[0_0_15px_rgba(249,115,22,0.2)]">
               <Flame className="w-5 h-5 text-orange-400 animate-pulse" />
               <div className="flex flex-col">
-                <div className="text-[10px] md:text-xs text-orange-400/80 uppercase tracking-widest font-bold mb-0.5 drop-shadow-lg">Combo</div>
-                <div className="text-sm md:text-base font-black text-orange-400 uppercase tracking-wide drop-shadow-md">{streak}x Multiplier</div>
+                <div className="text-meta text-orange-400/80 mb-0.5">Combo</div>
+                <div className="text-sm font-bold text-orange-400 tracking-wide">{streak}x Multiplier</div>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
 
-        <div className="flex gap-2">
+        <motion.div variants={staggerContainer} className="flex gap-2">
           {onToggleVoiceControl && (
             <button
               onClick={() => { sfx.playClick(); onToggleVoiceControl(); }}
-              className={`backdrop-blur-md border hover:bg-slate-700 rounded-2xl px-4 py-3 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center ${
-                voiceControlEnabled ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
+              className={`backdrop-blur-md border rounded-full px-4 py-2 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center ${
+                voiceControlEnabled ? 'surface-float border-blue-500/50 text-blue-400' : 'surface-raised border-white/5 text-slate-400 hover:text-white hover:border-white/20'
               }`}
             >
-              {voiceControlEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-50" />}
+              {voiceControlEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 opacity-50" />}
             </button>
           )}
 
-          <button
+          <motion.button
+            variants={cardEntrance}
+            whileHover={hoverEffect}
+            whileTap={tapEffect}
             onClick={toggleVoice}
-            className="bg-slate-800/80 backdrop-blur-md border border-slate-700 hover:bg-slate-700 rounded-2xl px-4 py-3 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center text-slate-300 hover:text-white"
+            className="surface-float border border-white/5 hover:border-white/20 rounded-full px-4 py-2 transition-all pointer-events-auto flex items-center justify-center text-slate-400 hover:text-white shadow-lg"
           >
-            {voiceOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 opacity-50" />}
-          </button>
+            {voiceOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 opacity-50" />}
+          </motion.button>
           
-          <button
+          <motion.button
+            variants={cardEntrance}
+            whileHover={hoverEffect}
+            whileTap={tapEffect}
             onClick={() => { sfx.playClick(); onEndSession(); }}
-            className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl px-5 py-3 transition-all pointer-events-auto font-bold tracking-widest cursor-pointer shadow-lg flex flex-col items-center justify-center active:scale-95"
+            className="surface-float border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-full px-6 py-2 transition-all pointer-events-auto font-bold tracking-widest cursor-pointer flex flex-col items-center justify-center shadow-lg"
           >
             <span className="uppercase text-xs md:text-sm">End Session</span>
             {voiceControlEnabled && <span className="text-[9px] md:text-[10px] opacity-70 mt-0.5">🎤 Say "Finish"</span>}
-          </button>
-        </div>
-      </div>
+          </motion.button>
+        </motion.div>
+      </motion.div>
 
       <div className="absolute top-28 left-4 right-4 flex justify-between items-start pointer-events-none">
        {/* Exploding Power Metric (If very explosive) */}
@@ -216,82 +226,85 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       </div>
 
       {/* Bottom Panels */}
-      <div className="absolute bottom-6 left-4 right-4 md:bottom-10 md:left-10 md:right-10 flex justify-between items-end pointer-events-none">
+      <motion.div variants={staggerContainer} className="absolute bottom-6 left-4 right-4 md:bottom-10 md:left-10 md:right-10 flex justify-between items-end pointer-events-none">
         
         {/* Rep Counter */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 min-w-[140px] md:min-w-[220px] shadow-2xl flex flex-col items-center pointer-events-auto">
-          <div className="flex items-center justify-center gap-2 mb-2 w-full">
-            <Target className="w-5 h-5 text-blue-400 drop-shadow-lg" />
-            <span className="text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">
+        <motion.div variants={cardEntrance} className="surface-float p-8 rounded-3xl min-w-[160px] md:min-w-[260px] flex flex-col items-center pointer-events-auto shadow-2xl border border-white/10 relative overflow-hidden group">
+          {/* Subtle Glow */}
+          <div className="absolute top-0 left-0 w-full h-full bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
+          <div className="flex items-center justify-center gap-2 mb-4 w-full">
+            <Target className="w-4 h-4 text-blue-500" />
+            <span className="text-meta">
               {exercise === 'plank' ? 'Hold Time (s)' : 'Rep Count'}
             </span>
           </div>
 
-          <div className="flex items-baseline justify-center gap-2 w-full">
-            <div className={`text-7xl md:text-9xl font-black tabular-nums tracking-tighter drop-shadow-xl ${flash ? 'text-white scale-110 drop-shadow-[0_0_30px_rgba(59,130,246,1)]' : 'text-slate-100'} transition-all duration-200`}>
+          <div className="flex items-baseline justify-center gap-2 w-full relative z-10">
+            <div className={`text-7xl md:text-[8rem] font-black tracking-tighter transition-all duration-200 ${flash ? 'text-white scale-110 drop-shadow-[0_0_30px_rgba(59,130,246,1)]' : 'text-hero-gradient'}`} style={{ lineHeight: '1' }}>
               {repCount}
             </div>
             {goal && (
-              <div className="text-3xl md:text-5xl font-black text-slate-400 drop-shadow-lg">
+              <div className="text-3xl font-bold text-slate-500 ml-2">
                 / {goal}
               </div>
             )}
           </div>
 
           {goal && (
-            <div className="w-full mt-6 flex flex-col gap-2">
-              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden relative">
-                <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]" style={{ width: `${progress}%` }}></div>
+            <div className="w-full mt-8 flex flex-col gap-3 relative z-10">
+              <div className="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden relative border border-white/5 shadow-inner">
+                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-500 ease-[0.22,1,0.36,1] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]" style={{ width: `${progress}%` }}></div>
               </div>
               {ghostData && (
-                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden relative flex items-center">
-                  <div className="absolute inset-y-0 left-0 bg-purple-500/80 transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(168,85,247,0.8)]" style={{ width: `${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}%` }}></div>
-                  <Ghost className="w-3 h-3 text-purple-300 absolute -mt-[14px]" style={{ left: `calc(${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}% - 6px)` }} />
+                <div className="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden relative flex items-center border border-white/5 shadow-inner mt-1">
+                  <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-500 ease-[0.22,1,0.36,1] rounded-full shadow-[0_0_15px_rgba(168,85,247,0.6)]" style={{ width: `${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}%` }}></div>
+                  <Ghost className="w-4 h-4 text-purple-300 absolute -mt-[18px]" style={{ left: `calc(${Math.min(100, (ghostRepCount / ghostData.goal) * 100)}% - 8px)` }} />
                 </div>
               )}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Live Metrics */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-5 md:p-6 min-w-[160px] md:min-w-[280px] shadow-2xl flex flex-col gap-5 pointer-events-auto">
+        <motion.div variants={cardEntrance} className="surface-float p-6 md:p-8 rounded-3xl min-w-[180px] md:min-w-[320px] flex flex-col gap-8 pointer-events-auto shadow-2xl border border-white/10">
           
-          <div className="flex justify-between items-end w-full">
+          <div className="flex justify-between items-end w-full gap-4">
             <div className="flex flex-col">
-              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 drop-shadow-lg">Form Score</span>
-              <span className={`text-3xl md:text-4xl font-black tabular-nums drop-shadow-lg ${scoreColor}`}>{formScore}%</span>
+              <span className="text-meta mb-1">Form Score</span>
+              <span className={`text-3xl md:text-5xl font-black tabular-nums tracking-tight ${scoreColor}`}>{formScore}%</span>
             </div>
             {exercise !== 'plank' && (
               <div className="flex flex-col items-center">
-                <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 flex items-center gap-1 drop-shadow-lg text-orange-400">
-                  <Flame className="w-3 h-3 drop-shadow-lg" /> Power
+                <span className="text-meta mb-1 flex items-center gap-1 text-orange-400">
+                  <Flame className="w-3 h-3" /> Power
                 </span>
-                <span className={`text-xl md:text-2xl font-black tabular-nums drop-shadow-lg text-orange-300`}>{power} <span className="text-xs">W</span></span>
+                <span className={`text-xl md:text-3xl font-black tabular-nums tracking-tight text-orange-400`}>{power} <span className="text-sm">W</span></span>
               </div>
             )}
             <div className="flex flex-col items-end">
-              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold mb-1 flex items-center gap-1 drop-shadow-lg">
-                <Activity className="w-3 h-3 drop-shadow-lg" /> Confidence
+              <span className="text-meta mb-1 flex items-center gap-1">
+                <Activity className="w-3 h-3" /> Confidence
               </span>
-              <span className={`text-xl md:text-2xl font-black tabular-nums drop-shadow-lg ${confidenceColor}`}>{poseConfidence}%</span>
+              <span className={`text-xl md:text-3xl font-black tabular-nums tracking-tight ${confidenceColor}`}>{poseConfidence}%</span>
             </div>
           </div>
 
           <div className="w-full">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold drop-shadow-lg">Stage</span>
-              <span className="text-xs md:text-sm font-black text-blue-400 tracking-wide uppercase drop-shadow-lg">{state}</span>
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-meta">Stage</span>
+              <span className="text-sm font-bold text-blue-400 tracking-wide uppercase">{state}</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-1.5 md:h-2 overflow-hidden">
+            <div className="w-full bg-slate-900/80 rounded-full h-2 overflow-hidden border border-white/5 shadow-inner">
               <div
-                className="h-full bg-blue-500 transition-all duration-300 ease-out rounded-full"
+                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-300 ease-[0.22,1,0.36,1] rounded-full"
                 style={{ width: stateProgress }}
               ></div>
             </div>
           </div>
 
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

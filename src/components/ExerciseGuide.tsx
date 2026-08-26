@@ -100,7 +100,7 @@ export function ExerciseGuide() {
               onClick={() => handleTab(tab.id as GuideTab)}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${
                 activeTab === tab.id 
-                  ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' 
+                  ? 'bg-lime-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -115,12 +115,12 @@ export function ExerciseGuide() {
           <div className="lg:col-span-5 flex flex-col gap-6">
             <motion.div variants={cardEntrance} className="surface-raised p-8 md:p-10">
               <h2 className="text-section mb-2">{data.title}</h2>
-              <p className="text-meta text-blue-400 mb-8">{data.subtitle}</p>
+              <p className="text-meta text-lime-400 mb-8">{data.subtitle}</p>
               
               <div className="space-y-6">
                 {data.instructions.map((inst, i) => (
                   <div key={i} className="flex gap-4 items-start group">
-                    <div className="shrink-0 w-8 h-8 rounded-full surface-float flex items-center justify-center text-blue-400 font-bold text-sm border border-white/5 group-hover:border-blue-500/50 transition-colors shadow-inner">
+                    <div className="shrink-0 w-8 h-8 rounded-full surface-float flex items-center justify-center text-lime-400 font-bold text-sm border border-white/5 group-hover:border-lime-500/50 transition-colors shadow-inner">
                       {i + 1}
                     </div>
                     <p className="text-body pt-1 group-hover:text-slate-200 transition-colors">{inst}</p>
@@ -129,8 +129,8 @@ export function ExerciseGuide() {
               </div>
             </motion.div>
 
-            <motion.div variants={cardEntrance} className="surface-float p-6 flex items-start gap-4 border border-blue-500/20 shadow-[0_4px_20px_rgba(37,99,235,0.1)]">
-              <CheckCircle2 className="w-6 h-6 text-blue-400 shrink-0" />
+            <motion.div variants={cardEntrance} className="surface-float p-6 flex items-start gap-4 border border-lime-500/20 shadow-[0_4px_20px_rgba(37,99,235,0.1)]">
+              <CheckCircle2 className="w-6 h-6 text-lime-400 shrink-0" />
               <div>
                 <h4 className="text-white font-bold mb-1">AI Coach Tip</h4>
                 <p className="text-xs text-body leading-relaxed">Ensure you perform these movements at a controlled pace. The AI model tracks your joint angles and velocity—rushing through reps may cause the tracking confidence to drop.</p>
@@ -143,7 +143,7 @@ export function ExerciseGuide() {
             <motion.div variants={cardEntrance} className="surface-raised p-2 overflow-hidden group">
               <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-900 border border-white/5 flex items-center justify-center">
                 <div className="absolute top-4 left-4 surface-float px-3 py-1.5 rounded-lg border border-white/10 text-meta flex items-center gap-2 z-10 shadow-xl transition-transform group-hover:-translate-y-1">
-                  <ImageIcon className="w-3 h-3 text-blue-400" /> FORM_ANALYSIS
+                  <ImageIcon className="w-3 h-3 text-lime-400" /> FORM_ANALYSIS
                 </div>
                 <img src={data.formImage} alt={`${data.title} Form`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-700 ease-[0.22,1,0.36,1]" />
               </div>

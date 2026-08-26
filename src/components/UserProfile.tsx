@@ -419,7 +419,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                 <select 
                   value={selectedCamera}
                   onChange={handleCameraChange}
-                  className="w-full sm:w-auto max-w-full sm:max-w-[200px] lg:max-w-[220px] bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500 shadow-inner truncate shrink-0"
+                  className="w-full sm:w-auto max-w-full sm:max-w-[200px] lg:max-w-[220px] bg-slate-900 border border-white/10 text-white rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:border-lime-500 shadow-inner truncate shrink-0"
                 >
                   {cameras.length === 0 ? (
                     <option value="">No cameras found</option>
@@ -475,7 +475,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                     <p className="text-xs text-slate-400">Light or Dark mode</p>
                   </div>
                 </div>
-                <div onClick={toggleTheme} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${isLightMode ? 'bg-blue-600' : 'bg-slate-900'}`}>
+                <div onClick={toggleTheme} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${isLightMode ? 'bg-lime-600' : 'bg-slate-900'}`}>
                   <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 } as any} className={`w-5 h-5 rounded-full bg-white shadow-md ${isLightMode ? 'ml-auto' : ''}`}></motion.div>
                 </div>
               </div>
@@ -489,7 +489,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                     <p className="text-xs text-slate-400">Streak reminders</p>
                   </div>
                 </div>
-                <div onClick={toggleNotifications} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${notificationsEnabled ? 'bg-blue-600' : 'bg-slate-900'}`}>
+                <div onClick={toggleNotifications} className={`rounded-full w-14 h-7 border border-white/10 flex items-center p-1 cursor-pointer transition-colors shadow-inner ${notificationsEnabled ? 'bg-lime-600' : 'bg-slate-900'}`}>
                   <motion.div layout transition={{ type: "spring", stiffness: 700, damping: 30 } as any} className={`w-5 h-5 rounded-full bg-white shadow-md ${notificationsEnabled ? 'ml-auto' : ''}`}></motion.div>
                 </div>
               </div>

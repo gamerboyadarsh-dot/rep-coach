@@ -80,7 +80,7 @@ export function AICoachChat() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
           <div className="flex items-center gap-2 text-white font-semibold">
-            <MessageCircle className="text-indigo-400" size={20} />
+            <MessageCircle className="text-lime-400" size={20} />
             AI Coach
           </div>
           <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
@@ -119,7 +119,7 @@ export function AICoachChat() {
         {selectedFile && (
           <div className="px-4 py-2 bg-slate-800 border-t border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-slate-300 overflow-hidden">
-              {selectedFile.type.startsWith('image') ? <ImageIcon size={16} className="text-indigo-400 shrink-0"/> : <FileText size={16} className="text-indigo-400 shrink-0"/>}
+              {selectedFile.type.startsWith('image') ? <ImageIcon size={16} className="text-lime-400 shrink-0"/> : <FileText size={16} className="text-lime-400 shrink-0"/>}
               <span className="truncate">{selectedFile.name}</span>
             </div>
             <button onClick={() => setSelectedFile(null)} className="text-slate-400 hover:text-red-400">
@@ -143,7 +143,7 @@ export function AICoachChat() {
             />
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 text-slate-400 hover:text-indigo-400 transition-colors shrink-0"
+              className="p-2 text-slate-400 hover:text-lime-400 transition-colors shrink-0"
               title="Attach Image or PDF"
             >
               <Paperclip size={20} />

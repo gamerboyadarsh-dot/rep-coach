@@ -35,7 +35,7 @@ export function ExerciseVideo({ src, poster, className = '' }: Props) {
   }, [isVisible]);
 
   return (
-    <div className={`relative overflow-hidden bg-slate-900 ${className}`}>
+    <div className={`overflow-hidden ${className}`}>
       <video
         ref={videoRef}
         src={src}

@@ -306,7 +306,7 @@ function App() {
     <ErrorBoundary>
       <CustomCursor />
       <Suspense fallback={<FullScreenLoader />}>
-        <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-blue-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
+        <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-lime-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
           
           <AnimatedBackground paused={appState === 'workout'} />
           <div className="noise-overlay" />
@@ -315,7 +315,7 @@ function App() {
           {appState !== 'auth' && appState !== 'workout' && (
             <nav className={`fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500 ${scrolled ? 'backdrop-blur-xl bg-slate-900/40 shadow-lg shadow-black/20 border-b border-white/5' : 'backdrop-blur-none bg-transparent'}`}>
               <div className="flex items-center gap-2 pointer-events-auto cursor-pointer" onClick={() => setAppState('selecting')}>
-                <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <div className="w-10 h-10 bg-gradient-to-tr from-lime-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <img src="/repcoach-icon.svg" className="w-6 h-6 text-white" alt="RepCoach" />
                 </div>
                 <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 hidden sm:block">
@@ -342,7 +342,7 @@ function App() {
                   {userPhoto ? (
                     <img src={userPhoto} alt="Profile" className="w-8 h-8 rounded-full border border-slate-600" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-lime-600 flex items-center justify-center font-bold text-sm">
                       {username ? username.charAt(0).toUpperCase() : 'U'}
                     </div>
                   )}
@@ -472,9 +472,9 @@ function App() {
             <footer className="w-full py-6 text-center text-slate-500 text-sm mt-auto relative z-10 border-t border-slate-800/50 bg-slate-950/80 backdrop-blur-sm">
               <p>Copyright © 2026 Rep Coach.</p>
               <div className="flex justify-center gap-4 mt-2">
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</motion.button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('privacy')} className="hover:text-lime-400 transition-colors">Privacy Policy</motion.button>
                 <span>|</span>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('terms')} className="hover:text-blue-400 transition-colors">Terms of Service</motion.button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('terms')} className="hover:text-lime-400 transition-colors">Terms of Service</motion.button>
               </div>
             </footer>
           )}
@@ -505,7 +505,7 @@ function App() {
                 </div>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
                   onClick={() => setLegalModal(null)}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all"
+                  className="w-full bg-lime-600 hover:bg-lime-500 text-white font-bold py-3 rounded-xl transition-all"
                 >
                   Close
                 </motion.button>

@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 hover:bg-blue-500 text-white w-full py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2"
+              className="bg-lime-600 hover:bg-lime-500 text-white w-full py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <RefreshCw className="w-5 h-5" /> Reboot System
             </button>

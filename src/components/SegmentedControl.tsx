@@ -19,7 +19,7 @@ export function SegmentedControl<T extends string | number | null>({
   options,
   value,
   onChange,
-  accentColor = 'from-blue-600 to-purple-600',
+  accentColor = 'from-lime-600 to-purple-600',
 }: SegmentedControlProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeIndex = options.findIndex((o) => o.value === value);

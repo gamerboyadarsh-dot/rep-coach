@@ -1,15 +1,17 @@
-import { useRef, useState, useEffect, useMemo, Suspense } from 'react';
+const fs = require('fs');
+
+const code = \import { useRef, useState, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Environment, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { WorkoutSession } from '../lib/achievements';
 import { Skeleton } from './Skeleton';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 interface MuscleRegion {
   name: string;
-  engagement: number; // 0–1
+  engagement: number; // 0�1
   position: [number, number, number];
   rotation: [number, number, number];
   type: 'capsule' | 'sphere' | 'cylinder';
@@ -20,7 +22,7 @@ interface HeatmapProps {
   history: WorkoutSession[];
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 function computeEngagement(history: WorkoutSession[]): Record<string, number> {
   const counts: Record<string, number> = {
@@ -39,7 +41,7 @@ function computeEngagement(history: WorkoutSession[]): Record<string, number> {
   for (const session of history) {
     const weights = exerciseWeights[session.exercise] ?? {};
     const reps = Math.min(session.reps ?? 1, 100);
-    const intensity = (reps / 100) * 0.6 + 0.4; // 0.4–1.0
+    const intensity = (reps / 100) * 0.6 + 0.4; // 0.4�1.0
     for (const [muscle, weight] of Object.entries(weights)) {
       counts[muscle] = Math.min(1, (counts[muscle] ?? 0) + weight * intensity * 0.35);
     }
@@ -70,7 +72,7 @@ function engagementColor(t: number): THREE.Color {
   return new THREE.Color('#ff3319');
 }
 
-// ─── Organic Muscle Block ─────────────────────────────────────────────────────
+// --- Organic Muscle Block -----------------------------------------------------
 
 function MuscleNode({ region, onClick, hovered, onHover }: { region: MuscleRegion, onClick: any, hovered: boolean, onHover: any }) {
   const ref = useRef<THREE.Mesh>(null!);
@@ -119,7 +121,7 @@ function MuscleNode({ region, onClick, hovered, onHover }: { region: MuscleRegio
   );
 }
 
-// ─── Humanoid Figure ──────────────────────────────────────────────────────────
+// --- Humanoid Figure ----------------------------------------------------------
 
 function HumanoidFigure({ engagement, onMuscleClick, isInteracting }: { engagement: Record<string, number>, onMuscleClick: any, isInteracting: boolean }) {
   const groupRef = useRef<THREE.Group>(null!);
@@ -225,21 +227,21 @@ function HumanoidFigure({ engagement, onMuscleClick, isInteracting }: { engageme
   );
 }
 
-// ─── Tooltip & Legend ────────────────────────────────────────────────────────
+// --- Tooltip & Legend --------------------------------------------------------
 
 function TooltipOverlay({ muscle, engagement }: { muscle: string; engagement: number }) {
   const pct = Math.round(engagement * 100);
   const label = pct === 0 ? 'Not activated' : pct < 30 ? 'Light activation' : pct < 60 ? 'Moderate' : pct < 85 ? 'High activation' : 'Peak activation';
-  const color = pct === 0 ? 'text-slate-400' : pct < 30 ? 'text-lime-400' : pct < 60 ? 'text-green-400' : pct < 85 ? 'text-yellow-400' : 'text-red-400';
+  const color = pct === 0 ? 'text-slate-400' : pct < 30 ? 'text-blue-400' : pct < 60 ? 'text-green-400' : pct < 85 ? 'text-yellow-400' : 'text-red-400';
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
       <div className="bg-slate-900/90 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-3 shadow-2xl text-center min-w-[160px]">
         <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{muscle}</div>
-        <div className={`text-2xl font-black tabular-nums ${color}`}>{pct}%</div>
+        <div className={\	ext-2xl font-black tabular-nums \\}>{pct}%</div>
         <div className="text-xs text-slate-400 mt-0.5">{label}</div>
         <div className="mt-2 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #a3e635, ${pct > 75 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e'})` }} />
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: \\%\, background: \linear-gradient(90deg, #3b82f6, \)\ }} />
         </div>
       </div>
     </div>
@@ -270,7 +272,7 @@ function FallbackHeatmap({ engagement }: { engagement: Record<string, number> })
           <div key={m.key} className="flex flex-col items-center gap-1">
             <div className="text-xs text-slate-400 font-bold">{m.name}</div>
             <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-lime-500 to-red-500 transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-red-500 transition-all" style={{ width: \\%\ }} />
             </div>
             <div className="text-xs font-mono text-white">{pct}%</div>
           </div>
@@ -280,7 +282,7 @@ function FallbackHeatmap({ engagement }: { engagement: Record<string, number> })
   );
 }
 
-// ─── Main Export ─────────────────────────────────────────────────────────────
+// --- Main Export -------------------------------------------------------------
 
 export default function Heatmap3D({ history }: HeatmapProps) {
   const [tooltip, setTooltip] = useState<{ name: string; engagement: number } | null>(null);
@@ -302,25 +304,27 @@ export default function Heatmap3D({ history }: HeatmapProps) {
   if (!webglSupported) {
     return (
       <div className="w-full">
-        <div className="text-center text-xs text-yellow-400 mb-2">WebGL not available — 2D mode</div>
+        <div className="text-center text-xs text-yellow-400 mb-2">WebGL not available ?" 2D mode</div>
         <FallbackHeatmap engagement={engagement} />
       </div>
     );
   }
 
+  // Set frameloop to demand when not interacting to save performance?
+  // Wait, we want subtle breathing when idle. But we can limit DPR to improve perf.
   return (
     <div className="w-full relative" style={{ height: '380px' }}>
       {tooltip && <TooltipOverlay muscle={tooltip.name} engagement={tooltip.engagement} />}
       {!isInteracting && !tooltip && (
         <div className="absolute bottom-9 left-1/2 -translate-x-1/2 text-[10px] text-slate-500 font-bold tracking-widest z-10 pointer-events-none animate-pulse">
-          DRAG TO ROTATE • SCROLL TO ZOOM • TAP MUSCLE FOR DETAILS
+          DRAG TO ROTATE A SCROLL TO ZOOM A TAP MUSCLE FOR DETAILS
         </div>
       )}
       <Legend />
 
       <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><Skeleton className="w-32 h-64 rounded-full opacity-20" /><div className="absolute font-bold text-slate-400 text-xs tracking-widest animate-pulse">LOADING 3D...</div></div>}>
         <Canvas
-          dpr={[1, Math.min(window.devicePixelRatio || 1, 1.5)]}
+          dpr={[1, Math.min(window.devicePixelRatio, 1.5)]} // Cap DPR at 1.5 to fix performance regression
           camera={{ position: [0, 0.2, 2.5], fov: 45 }}
           gl={{ antialias: true, powerPreference: 'low-power' }}
           style={{ background: 'transparent' }}
@@ -329,6 +333,8 @@ export default function Heatmap3D({ history }: HeatmapProps) {
           <ambientLight intensity={0.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.5} castShadow shadow-mapSize-width={512} shadow-mapSize-height={512} />
           <directionalLight position={[-2, 2, -2]} intensity={0.5} />
+          
+          {/* Subtle rim light */}
           <spotLight position={[0, 0, -3]} intensity={2} color="#a3e635" distance={10} angle={0.8} penumbra={1} />
           
           <Environment preset="studio" />
@@ -345,7 +351,7 @@ export default function Heatmap3D({ history }: HeatmapProps) {
             enablePan={false}
             enableZoom
             enableDamping
-            dampingFactor={0.05}
+            dampingFactor={0.05} // Momentum!
             minDistance={1.5}
             maxDistance={4.5}
             minPolarAngle={Math.PI * 0.15}
@@ -358,3 +364,6 @@ export default function Heatmap3D({ history }: HeatmapProps) {
     </div>
   );
 }
+\
+
+fs.writeFileSync('src/components/Heatmap3D.tsx', code);

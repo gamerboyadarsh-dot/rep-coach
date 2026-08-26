@@ -375,7 +375,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           <button 
             onClick={handleShare}
             disabled={isSharing}
-            className="w-full sm:w-auto bg-blue-600/20 hover:bg-blue-600 border border-lime-500/50 hover:border-blue-500 text-lime-400 hover:text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_30px_rgba(132,204,22,0.15)] group"
+            className="w-full sm:w-auto bg-lime-600/20 hover:bg-lime-600 border border-lime-500/50 hover:border-lime-500 text-lime-400 hover:text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_30px_rgba(132,204,22,0.15)] group"
           >
             {isSharing ? (
               <span className="flex items-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Generating Challenge...</span>

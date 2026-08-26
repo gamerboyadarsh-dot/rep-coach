@@ -95,15 +95,15 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
       >
         
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-blue-500/20 blur-[60px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-lime-500/20 blur-[60px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-purple-500/20 blur-[60px] pointer-events-none"></div>
 
         <div className="relative z-10 text-center mb-12">
-          <div className="icon-container-active w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-blue-500/10 border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
+          <div className="icon-container-active w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-lime-500/10 border border-lime-500/20 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
             <img src="/repcoach-icon.svg" className="w-10 h-10 text-white" alt="Rep Coach" />
           </div>
           <h1 className="text-display text-white tracking-tight mb-2">Rep Coach</h1>
-          <p className="text-meta text-blue-400">YOUR AI PERSONAL TRAINER</p>
+          <p className="text-meta text-lime-400">YOUR AI PERSONAL TRAINER</p>
         </div>
 
         {error && (

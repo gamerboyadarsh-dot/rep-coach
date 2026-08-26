@@ -1,3 +1,4 @@
+
 import { ExerciseVideo } from './ExerciseVideo';
 import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
@@ -125,14 +126,14 @@ export function ExerciseSelector({
                 {username ? username.charAt(0).toUpperCase() : '?'}
               </div>
             )}
-            <div className="absolute -bottom-3 -right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-lg border border-white/20 shadow-lg">
+            <div className="absolute -bottom-3 -right-3 bg-lime-600 text-white text-xs font-bold px-2 py-1 rounded-lg border border-white/20 shadow-lg">
               Lv {Math.floor(xp / 100) + 1}
             </div>
           </div>
           <div className="flex-1">
             <h2 className="text-display text-white mb-1 tracking-tight">Welcome back, {username}</h2>
             <p className="text-section text-lime-400 mb-1">Ready to crush your goals today?</p>
-            <p className="text-body text-slate-400">{rank.name} • {xp} XP</p>
+            <p className="w-full text-body text-slate-400">{rank.name} • {xp} XP</p>
             {isGuest && (
               <div className="mt-3 text-xs bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-full border border-amber-500/20 inline-flex items-center">
                 Guest Mode — Data saves locally
@@ -144,7 +145,7 @@ export function ExerciseSelector({
                   onClick={() => { sfx.playClick(); onToggleVoiceControl(); }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border shadow-lg ${
                     voiceControlEnabled 
-                      ? 'surface-float border-blue-500/50 text-lime-400' 
+                      ? 'surface-float border-lime-500/50 text-lime-400' 
                       : 'surface-raised border-white/5 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
@@ -153,7 +154,7 @@ export function ExerciseSelector({
                       <Mic className="w-4 h-4" />
                       {isListening ? (
                         <span className="flex items-center gap-1.5 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> Listening...
+                          <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-ping"></span> Listening...
                         </span>
                       ) : 'Voice Active'}
                     </>
@@ -210,13 +211,13 @@ export function ExerciseSelector({
         <div className="lg:col-span-2 flex flex-col gap-8">
           
           {/* Activity Chart */}
-          <motion.div variants={cardEntrance} className="surface-raised p-8">
+          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5, ease: "easeOut" }} className="surface-raised p-8">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-section flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-lime-400" /> 7-Day Activity
               </h3>
               <div className="flex surface-float rounded-lg p-1 border border-white/5">
-                <button onClick={() => { sfx.playClick(); setChartMode('reps'); }} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${chartMode === 'reps' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Reps</button>
+                <button onClick={() => { sfx.playClick(); setChartMode('reps'); }} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${chartMode === 'reps' ? 'bg-lime-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Reps</button>
                 <button onClick={() => { sfx.playClick(); setChartMode('calories'); }} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${chartMode === 'calories' ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Cals</button>
               </div>
             </div>
@@ -235,7 +236,7 @@ export function ExerciseSelector({
                   <div key={i} className="flex flex-col items-center flex-1 z-10 group h-full">
                     <div className="w-full max-w-[48px] surface-float border-t border-l border-r border-white/5 rounded-t-xl relative flex items-end justify-center transition-all group-hover:border-white/20 flex-1 overflow-hidden shadow-inner">
                       <div 
-                        className={`w-full rounded-t-xl transition-all duration-1000 ease-[0.22,1,0.36,1] ${chartMode === 'reps' ? 'bg-gradient-to-t from-blue-600 to-blue-400' : 'bg-gradient-to-t from-orange-600 to-orange-400'}`}
+                        className={`w-full rounded-t-xl transition-all duration-1000 ease-[0.22,1,0.36,1] ${chartMode === 'reps' ? 'bg-gradient-to-t from-lime-600 to-lime-400' : 'bg-gradient-to-t from-orange-600 to-orange-400'}`}
                         style={{ height: `${heightPercentage}%`, opacity: val === 0 ? 0 : 1 }}
                       ></div>
                       {/* Tooltip */}
@@ -253,7 +254,8 @@ export function ExerciseSelector({
           </motion.div>
 
           {/* Goal Selector */}
-          <motion.div variants={cardEntrance} className="flex flex-col items-start surface-raised p-8">
+          
+          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5, ease: "easeOut" }} className="flex flex-col items-start surface-raised p-8">
             <div className="flex items-center gap-3 mb-6">
               <Target className="w-5 h-5 text-purple-500" />
               <h3 className="text-section">Session Target</h3>
@@ -279,8 +281,9 @@ export function ExerciseSelector({
 
           {/* Start Exercises Grid */}
           <motion.div variants={staggerContainer} className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('squat')} className="cursor-pointer">
-              <SpotlightCard className="h-full relative overflow-hidden group">
+            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('squat')} className="cursor-pointer flex flex-col h-full">
+              <SpotlightCard className="h-full relative overflow-hidden group surface-raised border border-white/5 hover:border-lime-500/50 shadow-lg hover:shadow-[0_0_30px_rgba(163,230,53,0.15)] transition-all">
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                 <ExerciseVideo src="/squats.mp4" poster="/placeholder.png" className="absolute inset-0 z-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none" />
                 {recentWorkouts[0]?.exercise === 'squat' && (
                   <div className="absolute top-0 right-0 bg-lime-500/20 text-lime-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-lime-500/20 z-30">LAST</div>
@@ -288,13 +291,15 @@ export function ExerciseSelector({
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'squat' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-lime-500/10 group-hover:border-lime-500/30'}`}>
                   <Trophy className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'squat' ? 'text-white' : 'text-lime-500 group-hover:text-lime-400'}`} />
                 </div>
-                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-lime-400 transition-colors z-30 relative">Squats</h2>
-                <p className="text-body text-xs group-hover:text-lime-200 transition-colors z-30 relative">Lower body power</p>
-              </SpotlightCard>
+                <h2 className="w-full text-lg font-bold mb-1 text-white group-hover:text-lime-400 transition-colors z-30 relative">Squats</h2>
+                <p className="w-full text-body text-xs group-hover:text-lime-200 transition-colors z-30 relative">Lower body power</p>
+                </div>
+                </SpotlightCard>
             </motion.div>
 
-            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('pushup')} className="cursor-pointer">
-              <SpotlightCard className="h-full relative overflow-hidden group">
+            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('pushup')} className="cursor-pointer flex flex-col h-full">
+              <SpotlightCard className="h-full relative overflow-hidden group surface-raised border border-white/5 hover:border-lime-500/50 shadow-lg hover:shadow-[0_0_30px_rgba(163,230,53,0.15)] transition-all">
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                 <ExerciseVideo src="/pushup.mp4" poster="/placeholder.png" className="absolute inset-0 z-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none" />
                 {recentWorkouts[0]?.exercise === 'pushup' && (
                   <div className="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-orange-500/20 z-30">LAST</div>
@@ -302,13 +307,15 @@ export function ExerciseSelector({
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'pushup' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-orange-500/10 group-hover:border-orange-500/30'}`}>
                   <Flame className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'pushup' ? 'text-white' : 'text-orange-500 group-hover:text-orange-400'}`} />
                 </div>
-                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-orange-400 transition-colors z-30 relative">Push-ups</h2>
-                <p className="text-body text-xs group-hover:text-orange-200 transition-colors z-30 relative">Upper body strength</p>
-              </SpotlightCard>
+                <h2 className="w-full text-lg font-bold mb-1 text-white group-hover:text-orange-400 transition-colors z-30 relative">Push-ups</h2>
+                <p className="w-full text-body text-xs group-hover:text-orange-200 transition-colors z-30 relative">Upper body strength</p>
+                </div>
+                </SpotlightCard>
             </motion.div>
 
-            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('jumping_jack')} className="cursor-pointer">
-              <SpotlightCard className="h-full relative overflow-hidden group">
+            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('jumping_jack')} className="cursor-pointer flex flex-col h-full">
+              <SpotlightCard className="h-full relative overflow-hidden group surface-raised border border-white/5 hover:border-lime-500/50 shadow-lg hover:shadow-[0_0_30px_rgba(163,230,53,0.15)] transition-all">
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                 <ExerciseVideo src="/jacks.mp4" poster="/placeholder.png" className="absolute inset-0 z-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none" />
                 {recentWorkouts[0]?.exercise === 'jumping_jack' && (
                   <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-green-500/20 z-30">LAST</div>
@@ -316,13 +323,15 @@ export function ExerciseSelector({
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-green-500/10 group-hover:border-green-500/30'}`}>
                   <Activity className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'jumping_jack' ? 'text-white' : 'text-green-500 group-hover:text-green-400'}`} />
                 </div>
-                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-green-400 transition-colors z-30 relative">Jacks</h2>
-                <p className="text-body text-xs group-hover:text-green-200 transition-colors z-30 relative">Cardio & agility</p>
-              </SpotlightCard>
+                <h2 className="w-full text-lg font-bold mb-1 text-white group-hover:text-green-400 transition-colors z-30 relative">Jacks</h2>
+                <p className="w-full text-body text-xs group-hover:text-green-200 transition-colors z-30 relative">Cardio & agility</p>
+                </div>
+                </SpotlightCard>
             </motion.div>
 
-            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('plank')} className="cursor-pointer">
-              <SpotlightCard className="h-full relative overflow-hidden group">
+            <motion.div variants={cardEntrance} whileHover={hoverEffect} whileTap={tapEffect} onClick={() => handleSelect('plank')} className="cursor-pointer flex flex-col h-full">
+              <SpotlightCard className="h-full relative overflow-hidden group surface-raised border border-white/5 hover:border-lime-500/50 shadow-lg hover:shadow-[0_0_30px_rgba(163,230,53,0.15)] transition-all">
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                 <ExerciseVideo src="/plank.mp4" poster="/placeholder.png" className="absolute inset-0 z-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none" />
                 {recentWorkouts[0]?.exercise === 'plank' && (
                   <div className="absolute top-0 right-0 bg-purple-500/20 text-purple-400 text-meta px-3 py-1 rounded-bl-3xl rounded-tr-3xl border-b border-l border-purple-500/20 z-30">LAST</div>
@@ -330,14 +339,15 @@ export function ExerciseSelector({
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors z-30 relative ${recentWorkouts[0]?.exercise === 'plank' ? 'icon-container-active' : 'icon-container-premium group-hover:bg-purple-500/10 group-hover:border-purple-500/30'}`}>
                   <Shield className={`w-7 h-7 transition-colors ${recentWorkouts[0]?.exercise === 'plank' ? 'text-white' : 'text-purple-500 group-hover:text-purple-400'}`} />
                 </div>
-                <h2 className="text-lg font-bold mb-1 text-white group-hover:text-purple-400 transition-colors z-30 relative">Plank</h2>
-                <p className="text-body text-xs group-hover:text-purple-200 transition-colors z-30 relative">Core stability</p>
-              </SpotlightCard>
+                <h2 className="w-full text-lg font-bold mb-1 text-white group-hover:text-purple-400 transition-colors z-30 relative">Plank</h2>
+                <p className="w-full text-body text-xs group-hover:text-purple-200 transition-colors z-30 relative">Core stability</p>
+                </div>
+                </SpotlightCard>
             </motion.div>
           </motion.div>
           
           {/* Heatmap — 3D viewer, always rendered */}
-          <motion.div variants={cardEntrance} className="surface-raised p-6 mt-4">
+          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5, ease: "easeOut" }} className="surface-raised p-6 mt-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-section flex items-center gap-2">
                 <Target className="w-5 h-5 text-lime-400" /> 3D Muscle Heatmap
@@ -357,7 +367,7 @@ export function ExerciseSelector({
         </div>
 
         {/* Right Column: Recent Workouts List */}
-        <motion.div variants={cardEntrance} className="surface-raised p-8 flex flex-col h-full">
+        <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.5, ease: "easeOut" }} className="surface-raised p-8 flex flex-col h-full">
           <h3 className="text-section mb-6 flex items-center gap-2">
             <History className="w-5 h-5 text-slate-400" /> Recent Sessions
           </h3>
@@ -376,7 +386,7 @@ export function ExerciseSelector({
                   <Activity className="w-10 h-10 text-lime-400 opacity-80" />
                 </div>
                 <h4 className="text-lg font-bold text-white mb-2">No sessions yet</h4>
-                <p className="text-body mb-8 max-w-[200px] mx-auto">Your recent workout history and stats will appear here.</p>
+                <p className="w-full text-body mb-8 max-w-[200px] mx-auto">Your recent workout history and stats will appear here.</p>
                 <motion.button 
                   whileHover={hoverEffect}
                   whileTap={tapEffect}

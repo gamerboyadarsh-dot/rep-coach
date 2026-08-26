@@ -4,6 +4,7 @@ import { sfx } from '../lib/sounds';
 import { loadStats, getRankFromXP, type WorkoutSession } from '../lib/achievements';
 import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff, Dumbbell } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
+import { Skeleton } from './Skeleton';
 import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect, tapEffect } from '../lib/animations';
 import { SpotlightCard } from './SpotlightCard';
@@ -39,12 +40,14 @@ export function ExerciseSelector({
   const [chartData, setChartData] = useState<{day: string, reps: number, calories: number}[]>([]);
   const [chartMode, setChartMode] = useState<'reps' | 'calories'>('reps');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   const rank = getRankFromXP(xp);
 
   useEffect(() => {
     sfx.init();
     async function fetchStats() {
+      setIsLoadingStats(true);
       try {
         const stats = await loadStats(userId, isGuest);
         setLifetimeReps(stats.totalReps || 0);
@@ -82,6 +85,8 @@ export function ExerciseSelector({
         
       } catch (err) {
         console.error('Failed to load stats for dashboard', err);
+      } finally {
+        setIsLoadingStats(false);
       }
     }
     fetchStats();
@@ -333,7 +338,9 @@ export function ExerciseSelector({
                 <Target className="w-5 h-5 text-blue-400" /> Muscle Heatmap
               </h3>
             </div>
-            {recentWorkouts.length === 0 ? (
+            {isLoadingStats ? (
+              <Skeleton className="w-full h-64" />
+            ) : recentWorkouts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 opacity-70">
                 <div className="icon-container-premium w-16 h-16 flex items-center justify-center mb-4">
                   <Dumbbell className="w-8 h-8 text-slate-500" />
@@ -355,7 +362,14 @@ export function ExerciseSelector({
           </h3>
           
           <div className="flex-1 flex flex-col gap-4">
-            {recentWorkouts.length === 0 ? (
+            {isLoadingStats ? (
+              <>
+                <Skeleton className="w-full h-24" />
+                <Skeleton className="w-full h-24 opacity-70" />
+                <Skeleton className="w-full h-24 opacity-40" />
+                <Skeleton className="w-full h-24 opacity-20" />
+              </>
+            ) : recentWorkouts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <div className="icon-container-premium w-20 h-20 flex items-center justify-center mb-6">
                   <Activity className="w-10 h-10 text-blue-400 opacity-80" />

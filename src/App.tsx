@@ -393,26 +393,30 @@ function App() {
                 onToggleCamera={toggleCamera}
               />
               
-              <ARAvatar landmarks={landmarks} />
+              {isLoaded && (
+                <>
+                  <ARAvatar landmarks={landmarks} />
 
-              <WorkoutHUD
-                exercise={exercise}
-                repCount={repCount}
-                state={exerciseState}
-                errors={errors}
-                formScore={formScore}
-                poseConfidence={poseConfidence}
-                streak={exerciseLogic.getCurrentStreak()}
-                goal={goal}
-                power={power}
-                ghostData={ghostData}
-                startTime={startTime}
-                voiceControlEnabled={voiceControlEnabled}
-                onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
-                rhythmModeEnabled={rhythmModeEnabled}
-                rhythmRating={rhythmRating}
-                onEndSession={handleEndSession}
-              />
+                  <WorkoutHUD
+                    exercise={exercise}
+                    repCount={repCount}
+                    state={exerciseState}
+                    errors={errors}
+                    formScore={formScore}
+                    poseConfidence={poseConfidence}
+                    streak={exerciseLogic.getCurrentStreak()}
+                    goal={goal}
+                    power={power}
+                    ghostData={ghostData}
+                    startTime={startTime}
+                    voiceControlEnabled={voiceControlEnabled}
+                    onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
+                    rhythmModeEnabled={rhythmModeEnabled}
+                    rhythmRating={rhythmRating}
+                    onEndSession={handleEndSession}
+                  />
+                </>
+              )}
             </div>
           )}
 

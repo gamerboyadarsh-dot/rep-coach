@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect } from '../lib/animations';
 import { Trophy, Activity, Flame, LogOut, Settings, Video, Moon, Bell, History, Camera, Mic } from 'lucide-react';
 import { ScrambleNumber } from './ScrambleNumber';
+import { Skeleton } from './Skeleton';
 
 interface Props {
   userId: string;
@@ -203,17 +204,12 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
     localStorage.setItem('repCoach_personality', val);
   };
 
-  if (isLoading || !stats) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen pt-24 pb-12">
-        <div className="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const safeStats = stats || { totalReps: 0, totalWorkouts: 0, currentDailyStreak: 0, highestStreak: 0, xp: 0, workoutHistory: [], badges: {} } as unknown as UserStats;
+  const isPending = isLoading || !stats;
 
-  const badgesList = Object.values(stats.badges || {});
-  const currentRank = getRankFromXP(stats.xp || 0);
-  const workoutHistory = stats.workoutHistory || [];
+  const badgesList = Object.values(safeStats.badges || {});
+  const currentRank = getRankFromXP(safeStats.xp || 0);
+  const workoutHistory = safeStats.workoutHistory || [];
 
   return (
     <motion.div 
@@ -237,8 +233,8 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
               ref={fileInputRef} 
               onChange={handleImageUpload} 
             />
-            {stats.profilePicture || photoURL ? (
-              <img src={stats.profilePicture || photoURL!} alt={username} className="w-32 h-32 rounded-3xl border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.3)] object-cover group-hover:opacity-75 transition-opacity" />
+            {safeStats.profilePicture || photoURL ? (
+              <img src={safeStats.profilePicture || photoURL!} alt={username} className="w-32 h-32 rounded-3xl border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.3)] object-cover group-hover:opacity-75 transition-opacity" />
             ) : (
               <div className="w-32 h-32 rounded-3xl border border-white/10 bg-gradient-to-tr from-slate-800 to-slate-700 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)] group-hover:from-slate-700 group-hover:to-slate-600 transition-colors">
                 <span className="text-4xl font-black text-white">{username.charAt(0).toUpperCase()}</span>
@@ -273,14 +269,14 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Activity className="w-4 h-4 text-blue-400" /> Career Reps
             </div>
-            <div className="text-display text-hero-gradient"><ScrambleNumber value={stats.totalReps} /></div>
+            <div className="text-display text-hero-gradient"><ScrambleNumber value={safeStats.totalReps} /></div>
           </motion.div>
           
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center flex flex-col items-center justify-center">
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Trophy className="w-4 h-4 text-purple-400" /> Best Streak
             </div>
-            <div className="text-display text-white"><ScrambleNumber value={stats.highestStreak} /></div>
+            <div className="text-display text-white"><ScrambleNumber value={safeStats.highestStreak} /></div>
           </motion.div>
 
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center relative overflow-hidden flex flex-col items-center justify-center">
@@ -288,7 +284,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                Daily Streak
             </div>
             <div className="text-display text-orange-400 flex items-center justify-center gap-3">
-              <ScrambleNumber value={stats.currentDailyStreak} /> <Flame className="w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
+              <ScrambleNumber value={safeStats.currentDailyStreak} /> <Flame className="w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
             </div>
           </motion.div>
         </motion.div>
@@ -302,7 +298,13 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
               <History className="w-6 h-6 text-blue-500" /> Workout History
             </h2>
             <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {workoutHistory.length === 0 ? (
+              {isPending ? (
+                <>
+                  <Skeleton className="w-full h-20" />
+                  <Skeleton className="w-full h-20 opacity-70" />
+                  <Skeleton className="w-full h-20 opacity-40" />
+                </>
+              ) : workoutHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 border border-dashed border-white/10 rounded-2xl bg-white/5">
                   <Activity className="w-12 h-12 text-slate-600 mb-4" />
                   <p className="text-slate-400 font-medium text-center">No workout history yet.<br/>Your journey begins today.</p>

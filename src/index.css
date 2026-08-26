@@ -255,3 +255,8 @@ html.light-theme svg.google-logo {
   animation: scanline 5s linear infinite;
   border-bottom: 2px solid rgba(59, 130, 246, 0.8);
 }
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+

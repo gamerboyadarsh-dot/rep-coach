@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { sfx } from '../lib/sounds';
 import { BookOpen, CheckCircle2, Activity, Image as ImageIcon } from 'lucide-react';
-import Model from 'react-body-highlighter';
-import type { IExerciseData } from 'react-body-highlighter';
 import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, tapEffect } from '../lib/animations';
+
+const Heatmap3D = lazy(() => import('./Heatmap3D'));
 
 type GuideTab = 'squat' | 'pushup' | 'jumping_jack' | 'plank';
 
@@ -16,7 +16,6 @@ export function ExerciseGuide() {
       title: 'Bodyweight Squat',
       subtitle: 'Lower Body & Core Stability',
       formImage: '/images/realistic_squat_form.jpg',
-      muscles: [{ name: 'Squat', muscles: ['gluteal', 'quadriceps', 'hamstring', 'calves'] }] as IExerciseData[],
       instructions: [
         'Stand with feet shoulder-width apart.',
         'Keep your back straight and chest up.',
@@ -29,7 +28,6 @@ export function ExerciseGuide() {
       title: 'Tactical Push-up',
       subtitle: 'Upper Body Strength & Endurance',
       formImage: '/images/realistic_pushup_form.jpg',
-      muscles: [{ name: 'Push-up', muscles: ['chest', 'triceps', 'front-deltoids', 'abs'] }] as IExerciseData[],
       instructions: [
         'Assume a plank position with hands slightly wider than shoulder-width.',
         'Keep your body in a straight line from head to heels.',
@@ -42,7 +40,6 @@ export function ExerciseGuide() {
       title: 'Jumping Jacks',
       subtitle: 'Cardio Intensity & Coordination',
       formImage: '/images/realistic_jumping_jack_form.jpg',
-      muscles: [{ name: 'Jumping Jacks', muscles: ['calves', 'gluteal', 'front-deltoids', 'back-deltoids'] }] as IExerciseData[],
       instructions: [
         'Stand upright with your legs together and arms at your sides.',
         'Jump into the air while simultaneously spreading your legs wider than shoulder-width.',
@@ -55,7 +52,6 @@ export function ExerciseGuide() {
       title: 'Plank Hold',
       subtitle: 'Core & Total Body Stability',
       formImage: '/images/realistic_plank_form.jpg',
-      muscles: [{ name: 'Plank', muscles: ['abs', 'obliques', 'lower-back', 'front-deltoids', 'gluteal'] }] as IExerciseData[],
       instructions: [
         'Get into a push-up position, but resting on your forearms instead of your hands.',
         'Ensure your elbows are directly beneath your shoulders.',
@@ -159,8 +155,14 @@ export function ExerciseGuide() {
                   <Activity className="w-3 h-3 text-purple-400" /> INTERACTIVE_TARGETS
                 </div>
                 <div className="w-full flex justify-around opacity-80 group-hover:opacity-100 transition-opacity duration-700 ease-[0.22,1,0.36,1]">
-                  <Model data={data.muscles} type="anterior" style={{ width: '140px' }} highlightedColors={['#3b82f6']} />
-                  <Model data={data.muscles} type="posterior" style={{ width: '140px' }} highlightedColors={['#a855f7']} />
+                  <Suspense fallback={
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+                      <span className="mt-4 text-xs font-bold text-slate-400 tracking-wider">LOADING 3D HEATMAP</span>
+                    </div>
+                  }>
+                    <Heatmap3D />
+                  </Suspense>
                 </div>
               </div>
             </motion.div>

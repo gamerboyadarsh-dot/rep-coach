@@ -1,26 +1,20 @@
 import { useRef, useState, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Environment, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import type { WorkoutSession } from '../lib/achievements';
 import { SkeletonBlock } from './Skeleton';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 interface MuscleRegion {
   name: string;
-  engagement: number; // 0–1
+  engagement: number;
   position: [number, number, number];
-  rotation: [number, number, number];
-  type: 'capsule' | 'sphere' | 'cylinder';
-  args: any[];
+  radius: number;
 }
 
 interface HeatmapProps {
   history: WorkoutSession[];
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function computeEngagement(history: WorkoutSession[]): Record<string, number> {
   const counts: Record<string, number> = {
@@ -36,10 +30,11 @@ function computeEngagement(history: WorkoutSession[]): Record<string, number> {
     plank:        { core: 1.0, shoulders: 0.8, traps: 0.6, glutes: 0.5 },
   };
 
+
   for (const session of history) {
     const weights = exerciseWeights[session.exercise] ?? {};
     const reps = Math.min(session.reps ?? 1, 100);
-    const intensity = (reps / 100) * 0.6 + 0.4; // 0.4–1.0
+    const intensity = (reps / 100) * 0.6 + 0.4;
     for (const [muscle, weight] of Object.entries(weights)) {
       counts[muscle] = Math.min(1, (counts[muscle] ?? 0) + weight * intensity * 0.35);
     }
@@ -47,8 +42,9 @@ function computeEngagement(history: WorkoutSession[]): Record<string, number> {
   return counts;
 }
 
+
 function engagementColor(t: number): THREE.Color {
-  if (t <= 0.01) return new THREE.Color('#0f172a'); // Very dark slate (almost invisible muscle)
+  if (t <= 0.01) return new THREE.Color('#0f172a');
   const stops = [
     { t: 0.0,  c: [0.18, 0.45, 0.80] },
     { t: 0.25, c: [0.20, 0.75, 0.65] },
@@ -70,181 +66,147 @@ function engagementColor(t: number): THREE.Color {
   return new THREE.Color('#ff3319');
 }
 
-// ─── Organic Muscle Block ─────────────────────────────────────────────────────
 
-function MuscleNode({ region, onClick, hovered, onHover }: { region: MuscleRegion, onClick: any, hovered: boolean, onHover: any }) {
-  const ref = useRef<THREE.Mesh>(null!);
-  const color = useMemo(() => engagementColor(region.engagement), [region.engagement]);
-  const emissive = useMemo(
-    () => engagementColor(region.engagement).multiplyScalar(hovered ? 0.6 : (region.engagement > 0 ? 0.3 : 0.05)),
-    [region.engagement, hovered],
-  );
-
-  useFrame((_, delta) => {
-    if (!ref.current) return;
-    const scale = hovered ? 1.08 : 1.0;
-    ref.current.scale.setScalar(THREE.MathUtils.lerp(ref.current.scale.x, scale, 1 - Math.exp(-8 * delta)));
-  });
-
-  return (
-    <mesh
-      ref={ref}
-      position={region.position}
-      rotation={region.rotation}
-      onClick={(e) => { e.stopPropagation(); onClick(region.name, region.engagement); }}
-      onPointerOver={(e) => { e.stopPropagation(); onHover(region.name); }}
-      onPointerOut={(e) => { e.stopPropagation(); onHover(null); }}
-      castShadow
-      receiveShadow
-    >
-      {region.type === 'capsule' && <capsuleGeometry args={region.args as any} />}
-      {region.type === 'sphere' && <sphereGeometry args={region.args as any} />}
-      {region.type === 'cylinder' && <cylinderGeometry args={region.args as any} />}
-      
-      <meshPhysicalMaterial
-        color={color}
-        emissive={emissive}
-        roughness={0.4}
-        metalness={0.2}
-        clearcoat={0.3}
-        clearcoatRoughness={0.2}
-        sheen={1}
-        sheenRoughness={0.5}
-        sheenColor={new THREE.Color(0xa3e635)}
-        transparent
-        opacity={region.engagement <= 0.01 ? 0.35 : 0.9}
-        flatShading={false}
-      />
-    </mesh>
-  );
-}
-
-// ─── Humanoid Figure ──────────────────────────────────────────────────────────
-
-function HumanoidFigure({ engagement, onMuscleClick, isInteracting }: { engagement: Record<string, number>, onMuscleClick: any, isInteracting: boolean }) {
+function AnatomicalFigure({ engagement, onMuscleClick, isInteracting }: { engagement: Record<string, number>, onMuscleClick: any, isInteracting: boolean }) {
+  const { scene } = useGLTF('/male_base_mesh.glb');
   const groupRef = useRef<THREE.Group>(null!);
-  const [hoveredMuscle, setHoveredMuscle] = useState<string | null>(null);
+
+  const rotation: [number, number, number] = [0, -Math.PI / 2, 0];
+
+  const muscles: MuscleRegion[] = useMemo(() => [
+    { name: 'chest', engagement: engagement.chest ?? 0, position: [0, 0.45, 0.12], radius: 0.18 },
+    { name: 'core', engagement: engagement.core ?? 0, position: [0, 0.15, 0.11], radius: 0.18 },
+    { name: 'lats', engagement: engagement.lats ?? 0, position: [0, 0.45, -0.1], radius: 0.22 },
+    { name: 'traps', engagement: engagement.traps ?? 0, position: [0, 0.65, -0.06], radius: 0.15 },
+    { name: 'shoulders', engagement: engagement.shoulders ?? 0, position: [0.26, 0.58, 0], radius: 0.12 },
+    { name: 'shoulders', engagement: engagement.shoulders ?? 0, position: [-0.26, 0.58, 0], radius: 0.12 },
+    { name: 'biceps', engagement: engagement.biceps ?? 0, position: [0.3, 0.35, 0.04], radius: 0.12 },
+    { name: 'biceps', engagement: engagement.biceps ?? 0, position: [-0.3, 0.35, 0.04], radius: 0.12 },
+    { name: 'triceps', engagement: engagement.triceps ?? 0, position: [0.3, 0.35, -0.04], radius: 0.12 },
+    { name: 'triceps', engagement: engagement.triceps ?? 0, position: [-0.3, 0.35, -0.04], radius: 0.12 },
+    { name: 'forearms', engagement: 0, position: [0.35, 0.1, 0], radius: 0.1 },
+    { name: 'forearms', engagement: 0, position: [-0.35, 0.1, 0], radius: 0.1 },
+    { name: 'glutes', engagement: engagement.glutes ?? 0, position: [0, -0.05, -0.12], radius: 0.2 },
+    { name: 'quads', engagement: engagement.quads ?? 0, position: [0.12, -0.4, 0.08], radius: 0.18 },
+    { name: 'quads', engagement: engagement.quads ?? 0, position: [-0.12, -0.4, 0.08], radius: 0.18 },
+    { name: 'hamstrings', engagement: engagement.hamstrings ?? 0, position: [0.12, -0.4, -0.08], radius: 0.16 },
+    { name: 'hamstrings', engagement: engagement.hamstrings ?? 0, position: [-0.12, -0.4, -0.08], radius: 0.16 },
+    { name: 'calves', engagement: engagement.calves ?? 0, position: [0.12, -0.8, -0.04], radius: 0.12 },
+    { name: 'calves', engagement: engagement.calves ?? 0, position: [-0.12, -0.8, -0.04], radius: 0.12 },
+  ], [engagement]);
+
+  const skinMaterial = useMemo(() => {
+    const mat = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#1e293b'),
+      roughness: 0.5,
+      metalness: 0.1,
+      clearcoat: 0.2,
+      clearcoatRoughness: 0.3,
+    });
+
+    mat.onBeforeCompile = (shader) => {
+      const posArray = muscles.map(m => new THREE.Vector3(...m.position));
+      const engArray = muscles.map(m => m.engagement);
+      const colArray = muscles.map(m => engagementColor(m.engagement));
+      const radArray = muscles.map(m => m.radius);
+      
+      while(posArray.length < 20) {
+        posArray.push(new THREE.Vector3(0,0,0));
+        engArray.push(0);
+        colArray.push(new THREE.Color(0,0,0));
+        radArray.push(0);
+      }
+
+      shader.uniforms.uMusclePos = { value: posArray };
+      shader.uniforms.uMuscleEng = { value: engArray };
+      shader.uniforms.uMuscleColor = { value: colArray };
+      shader.uniforms.uMuscleRadius = { value: radArray };
+      shader.uniforms.uMuscleCount = { value: muscles.length };
+      
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `#include <common>\n        varying vec3 vWorldPos;`
+      ).replace(
+        '#include <worldpos_vertex>',
+        `#include <worldpos_vertex>\n        vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;`
+      );
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <common>',
+        `#include <common>\n        varying vec3 vWorldPos;\n        uniform vec3 uMusclePos[20];\n        uniform float uMuscleEng[20];\n        uniform vec3 uMuscleColor[20];\n        uniform float uMuscleRadius[20];\n        uniform int uMuscleCount;`
+      ).replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>\n        vec3 glow = vec3(0.0);\n        for(int i=0; i<20; i++) {\n           if (i >= uMuscleCount) break;\n           float dist = length(vWorldPos - uMusclePos[i]);\n           float intensity = smoothstep(uMuscleRadius[i], uMuscleRadius[i] * 0.2, dist) * uMuscleEng[i];\n           glow += uMuscleColor[i] * intensity * 2.5;\n        }\n        totalEmissiveRadiance += glow;`
+      );
+    };
+    return mat;
+  }, [muscles]);
+
+
+  useEffect(() => {
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        (child as THREE.Mesh).material = skinMaterial;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [scene, skinMaterial]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     
-    // Idle breathing & floating
     if (!isInteracting) {
       groupRef.current.rotation.y += delta * 0.2;
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.02; // subtle float/breathe
-      
-      // Slight chest expansion on breathe in
-      const breathScale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.02;
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.015;
+      const breathScale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.01;
       groupRef.current.scale.set(1, breathScale, 1 + (breathScale-1)*1.5);
     } else {
-      // Lerp back to neutral scale when interacting
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(groupRef.current.scale.x, 1, 0.1));
       groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, 0, 0.1);
     }
   });
 
-  // Build anatomy using smooth primitives
-  // Args: capsule: [radius, length, capSeg, radSeg]
-  // sphere: [radius, widthSeg, heightSeg]
-  // cylinder: [radTop, radBot, height, radSeg]
-  const muscles: MuscleRegion[] = [
-    // Torso (Cylinders & spheres blended)
-    { name: 'chest', engagement: engagement.chest ?? 0, position: [0, 0.5, 0.05], rotation: [0.1, 0, 0], type: 'capsule', args: [0.18, 0.2, 16, 16] },
-    { name: 'core', engagement: engagement.core ?? 0, position: [0, 0.2, 0.04], rotation: [0, 0, 0], type: 'capsule', args: [0.15, 0.25, 16, 16] },
-    { name: 'lats', engagement: engagement.lats ?? 0, position: [0, 0.45, -0.05], rotation: [-0.1, 0, 0], type: 'capsule', args: [0.19, 0.25, 16, 16] },
-    { name: 'traps', engagement: engagement.traps ?? 0, position: [0, 0.72, -0.03], rotation: [-0.2, 0, 0], type: 'capsule', args: [0.12, 0.3, 16, 16] },
-    
-    // Shoulders
-    { name: 'shoulders', engagement: engagement.shoulders ?? 0, position: [0.24, 0.65, 0], rotation: [0, 0, 0.4], type: 'sphere', args: [0.11, 16, 16] },
-    { name: 'shoulders', engagement: engagement.shoulders ?? 0, position: [-0.24, 0.65, 0], rotation: [0, 0, -0.4], type: 'sphere', args: [0.11, 16, 16] },
-    
-    // Arms (Capsules)
-    { name: 'biceps', engagement: engagement.biceps ?? 0, position: [0.28, 0.42, 0.03], rotation: [0, 0, 0.15], type: 'capsule', args: [0.07, 0.2, 12, 12] },
-    { name: 'biceps', engagement: engagement.biceps ?? 0, position: [-0.28, 0.42, 0.03], rotation: [0, 0, -0.15], type: 'capsule', args: [0.07, 0.2, 12, 12] },
-    { name: 'triceps', engagement: engagement.triceps ?? 0, position: [0.28, 0.42, -0.02], rotation: [0, 0, 0.15], type: 'capsule', args: [0.065, 0.22, 12, 12] },
-    { name: 'triceps', engagement: engagement.triceps ?? 0, position: [-0.28, 0.42, -0.02], rotation: [0, 0, -0.15], type: 'capsule', args: [0.065, 0.22, 12, 12] },
-    
-    // Forearms
-    { name: 'forearms', engagement: 0.1, position: [0.33, 0.12, 0], rotation: [0, 0, 0.1], type: 'capsule', args: [0.05, 0.22, 12, 12] },
-    { name: 'forearms', engagement: 0.1, position: [-0.33, 0.12, 0], rotation: [0, 0, -0.1], type: 'capsule', args: [0.05, 0.22, 12, 12] },
-    
-    // Pelvis/Glutes
-    { name: 'glutes', engagement: engagement.glutes ?? 0, position: [0, -0.05, -0.08], rotation: [0.2, 0, 0], type: 'capsule', args: [0.16, 0.15, 16, 16] },
-    
-    // Thighs (Quads/Hams)
-    { name: 'quads', engagement: engagement.quads ?? 0, position: [0.11, -0.35, 0.02], rotation: [0, 0, -0.05], type: 'capsule', args: [0.09, 0.35, 16, 16] },
-    { name: 'quads', engagement: engagement.quads ?? 0, position: [-0.11, -0.35, 0.02], rotation: [0, 0, 0.05], type: 'capsule', args: [0.09, 0.35, 16, 16] },
-    { name: 'hamstrings', engagement: engagement.hamstrings ?? 0, position: [0.11, -0.35, -0.04], rotation: [0, 0, -0.05], type: 'capsule', args: [0.08, 0.35, 16, 16] },
-    { name: 'hamstrings', engagement: engagement.hamstrings ?? 0, position: [-0.11, -0.35, -0.04], rotation: [0, 0, 0.05], type: 'capsule', args: [0.08, 0.35, 16, 16] },
-    
-    // Calves
-    { name: 'calves', engagement: engagement.calves ?? 0, position: [0.11, -0.75, -0.02], rotation: [0, 0, 0], type: 'capsule', args: [0.07, 0.3, 12, 12] },
-    { name: 'calves', engagement: engagement.calves ?? 0, position: [-0.11, -0.75, -0.02], rotation: [0, 0, 0], type: 'capsule', args: [0.07, 0.3, 12, 12] },
-  ];
-
   return (
-    <group ref={groupRef} position={[0, 0.2, 0]}>
-      {/* Head */}
-      <mesh position={[0, 0.95, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.12, 32, 32]} />
-        <meshPhysicalMaterial color="#0f172a" roughness={0.6} clearcoat={0.1} />
-      </mesh>
-      
-      {/* Neck */}
-      <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.06, 0.08, 0.15, 16]} />
-        <meshPhysicalMaterial color="#0f172a" roughness={0.6} />
-      </mesh>
-
-      {/* Pelvis Core */}
-      <mesh position={[0, -0.05, 0]} castShadow receiveShadow>
-        <capsuleGeometry args={[0.15, 0.1, 16, 16]} />
-        <meshPhysicalMaterial color="#0f172a" roughness={0.6} />
-      </mesh>
-
-      {/* Knees */}
-      <mesh position={[0.11, -0.57, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.07, 16, 16]} />
-        <meshPhysicalMaterial color="#0f172a" roughness={0.6} />
-      </mesh>
-      <mesh position={[-0.11, -0.57, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.07, 16, 16]} />
-        <meshPhysicalMaterial color="#0f172a" roughness={0.6} />
-      </mesh>
-
+    <group ref={groupRef} position={[0, 0.1, 0]}>
+      <primitive object={scene} rotation={rotation} />
       {muscles.map((r, i) => (
-        <MuscleNode
+        <mesh
           key={i}
-          region={r}
-          onClick={onMuscleClick}
-          hovered={hoveredMuscle === r.name}
-          onHover={setHoveredMuscle}
-        />
+          position={r.position}
+          visible={true}
+          onClick={(e) => { e.stopPropagation(); onMuscleClick(r.name, r.engagement); }}
+          onPointerOver={(e) => { e.stopPropagation(); }}
+          onPointerOut={(e) => { e.stopPropagation(); }}
+        >
+          <sphereGeometry args={[r.radius, 8, 8]} />
+          <meshBasicMaterial transparent opacity={0} depthTest={true} />
+        </mesh>
       ))}
     </group>
   );
 }
 
-// ─── Tooltip & Legend ────────────────────────────────────────────────────────
 
 function TooltipOverlay({ muscle, engagement }: { muscle: string; engagement: number }) {
   const pct = Math.round(engagement * 100);
   const label = pct === 0 ? 'Not activated' : pct < 30 ? 'Light activation' : pct < 60 ? 'Moderate' : pct < 85 ? 'High activation' : 'Peak activation';
-  const color = pct === 0 ? 'text-slate-400' : pct < 30 ? 'text-lime-400' : pct < 60 ? 'text-green-400' : pct < 85 ? 'text-yellow-400' : 'text-red-400';
+  const color = pct === 0 ? 'text-slate-400' : pct < 30 ? 'text-blue-400' : pct < 60 ? 'text-green-400' : pct < 85 ? 'text-yellow-400' : 'text-red-400';
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-      <div className="bg-slate-900/90 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-3 shadow-2xl text-center min-w-[160px]">
+      <div className="bg-slate-900/90 backdrop-blur-sm border border-white/10 rounded-2l px-5 py-3 shadow-22l text-center min-w-[160px]">
         <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{muscle}</div>
         <div className={`text-2xl font-black tabular-nums ${color}`}>{pct}%</div>
         <div className="text-xs text-slate-400 mt-0.5">{label}</div>
         <div className="mt-2 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #a3e635, ${pct > 75 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e'})` }} />
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #3b82f6, ${pct > 75 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e'})` }} />
         </div>
       </div>
     </div>
   );
 }
+
 
 function Legend() {
   return (
@@ -255,6 +217,7 @@ function Legend() {
     </div>
   );
 }
+
 
 function FallbackHeatmap({ engagement }: { engagement: Record<string, number> }) {
   const muscles = [
@@ -280,7 +243,6 @@ function FallbackHeatmap({ engagement }: { engagement: Record<string, number> })
   );
 }
 
-// ─── Main Export ─────────────────────────────────────────────────────────────
 
 export default function Heatmap3D({ history }: HeatmapProps) {
   const [tooltip, setTooltip] = useState<{ name: string; engagement: number } | null>(null);
@@ -302,7 +264,7 @@ export default function Heatmap3D({ history }: HeatmapProps) {
   if (!webglSupported) {
     return (
       <div className="w-full">
-        <div className="text-center text-xs text-yellow-400 mb-2">WebGL not available — 2D mode</div>
+        <div className="text-center text-xs text-yellow-400 mb-2">WebGL not available -- 2D mode</div>
         <FallbackHeatmap engagement={engagement} />
       </div>
     );
@@ -313,27 +275,28 @@ export default function Heatmap3D({ history }: HeatmapProps) {
       {tooltip && <TooltipOverlay muscle={tooltip.name} engagement={tooltip.engagement} />}
       {!isInteracting && !tooltip && (
         <div className="absolute bottom-9 left-1/2 -translate-x-1/2 text-[10px] text-slate-500 font-bold tracking-widest z-10 pointer-events-none animate-pulse">
-          DRAG TO ROTATE • SCROLL TO ZOOM • TAP MUSCLE FOR DETAILS
+          DRAG TO ROTATE - SCROLL TO ZOOM - TAP MUSCLE FOR DETAILS
         </div>
       )}
       <Legend />
 
-      <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><SkeletonBlock className="w-32 h-64 rounded-full opacity-20" /><div className="absolute font-bold text-slate-400 text-xs tracking-widest animate-pulse">LOADING 3D...</div></div>}>
+      <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><SkeletonBlock className="w-32 h-64 rounded-full opacity-20" /><div className="absolute font-bold text-slate-400 text-xs tracking-widest animate-pulse">LOADING ANATOMY...</div></div>}>
         <Canvas
           dpr={[1, Math.min(window.devicePixelRatio || 1, 1.5)]}
           camera={{ position: [0, 0.2, 2.5], fov: 45 }}
           gl={{ antialias: true, powerPreference: 'low-power' }}
           style={{ background: 'transparent' }}
           shadows
+          frameloop="demand"
         >
           <ambientLight intensity={0.6} />
-          <directionalLight position={[2, 4, 3]} intensity={1.5} castShadow shadow-mapSize-width={512} shadow-mapSize-height={512} />
-          <directionalLight position={[-2, 2, -2]} intensity={0.5} />
-          <spotLight position={[0, 0, -3]} intensity={2} color="#a3e635" distance={10} angle={0.8} penumbra={1} />
+          <directionalLight position={[2, 4, 3]} intensity={1.2} castShadow shadow-mapSize-width={512} shadow-mapSize-height={512} />
+          <directionalLight position={[-2, 2, -2]} intensity={0.4} />
+          <spotLight position={[0, 0, -3]} intensity={1.5} color="#a3e635" distance={10} angle={0.8} penumbra={1} />
           
           <Environment preset="studio" />
 
-          <HumanoidFigure
+          <AnatomicalFigure
             engagement={engagement}
             onMuscleClick={(name: string, eng: number) => setTooltip(prev => (prev?.name === name ? null : { name, engagement: eng }))}
             isInteracting={isInteracting}
@@ -358,3 +321,5 @@ export default function Heatmap3D({ history }: HeatmapProps) {
     </div>
   );
 }
+
+useGLTF.preload('/male_base_mesh.glb');

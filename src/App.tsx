@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { usePoseDetection } from './hooks/usePoseDetection';
@@ -299,14 +299,14 @@ function App() {
 
               <div className="pointer-events-auto flex gap-4">
                 {appState === 'selecting' && (
-                  <button 
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
                     onClick={() => { sfx.playClick(); setAppState('guide'); }}
                     className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-md px-4 py-2 rounded-full border border-slate-700 transition-all shadow-lg active:scale-95"
                   >
                     <span className="font-bold text-sm">Guide</span>
-                  </button>
+                  </motion.button>
                 )}
-                <button 
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
                   onClick={() => {
                     sfx.playClick();
                     setAppState(appState === 'profile' ? 'selecting' : 'profile');
@@ -323,7 +323,7 @@ function App() {
                   <span className="font-bold text-sm text-slate-200 group-hover:text-white transition-colors">
                     {appState === 'profile' ? 'Back' : 'Profile'}
                   </span>
-                </button>
+                </motion.button>
               </div>
             </nav>
           )}
@@ -446,9 +446,9 @@ function App() {
             <footer className="w-full py-6 text-center text-slate-500 text-sm mt-auto relative z-10 border-t border-slate-800/50 bg-slate-950/80 backdrop-blur-sm">
               <p>Copyright © 2026 Rep Coach.</p>
               <div className="flex justify-center gap-4 mt-2">
-                <button onClick={() => setLegalModal('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</motion.button>
                 <span>|</span>
-                <button onClick={() => setLegalModal('terms')} className="hover:text-blue-400 transition-colors">Terms of Service</button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setLegalModal('terms')} className="hover:text-blue-400 transition-colors">Terms of Service</motion.button>
               </div>
             </footer>
           )}
@@ -477,12 +477,12 @@ function App() {
                     </>
                   )}
                 </div>
-                <button 
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
                   onClick={() => setLegalModal(null)}
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all"
                 >
                   Close
-                </button>
+                </motion.button>
               </div>
             </div>
           )}

@@ -13,7 +13,19 @@ const firebaseConfig = {
 };
 
 if (!firebaseConfig.apiKey) {
-  console.warn("⚠️ Firebase is not configured! Please provide VITE_FIREBASE_API_KEY in .env");
+  const missingKeys = [];
+  if (!import.meta.env.VITE_FIREBASE_API_KEY) missingKeys.push('VITE_FIREBASE_API_KEY');
+  if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) missingKeys.push('VITE_FIREBASE_AUTH_DOMAIN');
+  if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missingKeys.push('VITE_FIREBASE_PROJECT_ID');
+  if (!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) missingKeys.push('VITE_FIREBASE_STORAGE_BUCKET');
+  if (!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) missingKeys.push('VITE_FIREBASE_MESSAGING_SENDER_ID');
+  if (!import.meta.env.VITE_FIREBASE_APP_ID) missingKeys.push('VITE_FIREBASE_APP_ID');
+  
+  if (missingKeys.length > 0) {
+    console.error(`[Firebase Init Error] The following required environment variables are missing:\n- ${missingKeys.join('\n- ')}\n\nPlease add them to your .env file and rebuild the application.`);
+  } else {
+    console.warn("⚠️ Firebase is not configured! Please provide VITE_FIREBASE_API_KEY in .env");
+  }
 }
 
 import { getFirestore } from 'firebase/firestore';

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect } from '../lib/animations';
 import { Trophy, Activity, Flame, LogOut, Settings, Video, Moon, Bell, History, Camera, Mic } from 'lucide-react';
 import { CountUpNumber } from './CountUpNumber';
-import { Skeleton } from './Skeleton';
+import { SkeletonBlock } from './Skeleton';
 
 interface Props {
   userId: string;
@@ -300,9 +300,9 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
             <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {isPending ? (
                 <>
-                  <Skeleton className="w-full h-20" />
-                  <Skeleton className="w-full h-20 opacity-70" />
-                  <Skeleton className="w-full h-20 opacity-40" />
+                  <SkeletonBlock className="w-full h-20" />
+                  <SkeletonBlock className="w-full h-20 opacity-70" />
+                  <SkeletonBlock className="w-full h-20 opacity-40" />
                 </>
               ) : workoutHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 border border-dashed border-white/10 rounded-2xl bg-white/5">

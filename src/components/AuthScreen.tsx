@@ -80,7 +80,7 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen relative z-10 w-full">
-        <div className="w-12 h-12 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-white/10 border-t-lime-500 rounded-full animate-spin"></div>
       </div>
     );
   }

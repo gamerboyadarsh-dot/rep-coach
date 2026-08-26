@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
+import { SplashScreen } from './components/SplashScreen';
 import { usePoseDetection } from './hooks/usePoseDetection';
 import { useVoiceCommand } from './hooks/useVoiceCommand';
 import { getVisionCoachingAdvice } from './lib/genAI';
@@ -27,7 +28,7 @@ const AICoachChat = React.lazy(() => import('./components/AICoachChat').then(m =
 // Loading Skeleton
 const FullScreenLoader = () => (
   <div className="flex flex-col items-center justify-center min-h-screen">
-    <div className="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+    <div className="w-12 h-12 border-4 border-slate-700 border-t-lime-500 rounded-full animate-spin"></div>
   </div>
 );
 
@@ -37,6 +38,12 @@ type AppState = 'auth' | 'selecting' | 'workout' | 'summary' | 'profile' | 'guid
 
 function App() {
   const [appState, setAppState] = useState<AppState>('auth');
+  const [isBooting, setIsBooting] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsBooting(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+  const [authResolved, setAuthResolved] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -56,7 +63,7 @@ function App() {
         setUsername(user.displayName || user.email || 'Athlete');
         setUserPhoto(user.photoURL || null);
         setIsGuest(false);
-        setAppState('selecting');
+        setAppState('selecting'); setAuthResolved(true);
       } else {
         setUserId(null);
         setUsername(null);
@@ -309,6 +316,7 @@ function App() {
         <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-lime-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
           
           <AnimatedBackground paused={appState === 'workout'} />
+            <SplashScreen isVisible={isBooting || !authResolved} />
           <div className="noise-overlay" />
 
           {/* Navigation Bar */}

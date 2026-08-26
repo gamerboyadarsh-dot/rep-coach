@@ -53,7 +53,7 @@ export function CameraView({ videoRef, canvasRef, isLoaded, error, isFrontFacing
                 <Loader2 className="w-10 h-10 text-lime-400 animate-spin" />
               </div>
             </div>
-            <div className="text-2xl font-black text-white mb-3 tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">LOADING MODELS...</div>
+            <div className="text-2xl font-black text-white mb-3 tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-lime-200">LOADING MODELS...</div>
             <div className="text-sm text-lime-400/80 font-bold tracking-widest uppercase flex flex-col items-center gap-2">
               <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" /> Vision Network</span>
               <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" style={{animationDelay: '0.5s'}} /> Pose Landmarker</span>

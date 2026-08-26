@@ -6,7 +6,7 @@ import { sfx } from '../lib/sounds';
 import { loadStats, getRankFromXP, type WorkoutSession } from '../lib/achievements';
 import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
-import { Skeleton } from './Skeleton';
+import { SkeletonBlock, LoadingBoundary} from './Skeleton';
 import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect, tapEffect } from '../lib/animations';
 import { SpotlightCard } from './SpotlightCard';
@@ -356,13 +356,24 @@ export function ExerciseSelector({
                 <span className="text-xs text-slate-500 font-bold">Complete a workout to activate</span>
               )}
             </div>
-            {isLoadingStats ? (
-              <Skeleton className="w-full h-[380px]" />
-            ) : (
-              <div className="rounded-2xl overflow-hidden border border-white/5 bg-slate-950/50">
-                <MuscleHeatmap history={recentWorkouts} />
-              </div>
-            )}
+            <LoadingBoundary isLoading={isLoadingStats} fallback={<SkeletonBlock className="w-full h-[380px] rounded-2xl" />}>
+                
+                <div className="rounded-2xl overflow-hidden border border-white/5 bg-slate-950/50 relative">
+                  <div className={recentWorkouts.length === 0 ? 'opacity-30 blur-sm pointer-events-none' : ''}>
+                    <MuscleHeatmap history={recentWorkouts} />
+                  </div>
+                  {recentWorkouts.length === 0 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-950/40">
+                      <div className="w-16 h-16 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center mb-4">
+                        <Target className="w-8 h-8 text-slate-600" />
+                      </div>
+                      <h4 className="text-white font-bold mb-1">Awaiting Data</h4>
+                      <p className="text-xs text-slate-400 max-w-[180px]">Your muscle activation will be visualized here after your first session.</p>
+                    </div>
+                  )}
+                </div>
+
+              </LoadingBoundary>
           </motion.div>
         </div>
 
@@ -373,14 +384,8 @@ export function ExerciseSelector({
           </h3>
           
           <div className="flex-1 flex flex-col gap-4">
-            {isLoadingStats ? (
-              <>
-                <Skeleton className="w-full h-24" />
-                <Skeleton className="w-full h-24 opacity-70" />
-                <Skeleton className="w-full h-24 opacity-40" />
-                <Skeleton className="w-full h-24 opacity-20" />
-              </>
-            ) : recentWorkouts.length === 0 ? (
+            <LoadingBoundary isLoading={isLoadingStats} fallback={<div className="flex flex-col gap-4">{[1,2,3,4].map(i => <SkeletonBlock key={i} className="w-full h-24 rounded-2xl" style={{ opacity: 1 - ((i-1)*0.2) }} />)}</div>}>
+              {recentWorkouts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <div className="icon-container-premium w-20 h-20 flex items-center justify-center mb-6">
                   <Activity className="w-10 h-10 text-lime-400 opacity-80" />
@@ -426,9 +431,10 @@ export function ExerciseSelector({
                       </div>
                     </div>
                   </motion.div>
-                );
-              })
-            )}
+            );
+          })
+        )}
+        </LoadingBoundary>
           </div>
           
           {recentWorkouts.length > 0 && (

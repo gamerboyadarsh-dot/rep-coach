@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import type { WorkoutSession } from '../lib/achievements';
-import { Skeleton } from './Skeleton';
+import { SkeletonBlock } from './Skeleton';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -318,7 +318,7 @@ export default function Heatmap3D({ history }: HeatmapProps) {
       )}
       <Legend />
 
-      <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><Skeleton className="w-32 h-64 rounded-full opacity-20" /><div className="absolute font-bold text-slate-400 text-xs tracking-widest animate-pulse">LOADING 3D...</div></div>}>
+      <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center"><SkeletonBlock className="w-32 h-64 rounded-full opacity-20" /><div className="absolute font-bold text-slate-400 text-xs tracking-widest animate-pulse">LOADING 3D...</div></div>}>
         <Canvas
           dpr={[1, Math.min(window.devicePixelRatio || 1, 1.5)]}
           camera={{ position: [0, 0.2, 2.5], fov: 45 }}

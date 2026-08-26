@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect, tapEffect } from '../lib/animations';
 import { SpotlightCard } from './SpotlightCard';
 import { CountUpNumber } from './CountUpNumber';
+import { SegmentedControl } from './SegmentedControl';
 
 interface Props {
   userId: string;
@@ -256,12 +257,23 @@ export function ExerciseSelector({
               <Target className="w-5 h-5 text-purple-500" />
               <h3 className="text-section">Session Target</h3>
             </div>
-            <div className="flex flex-wrap justify-start gap-3 w-full">
-              <motion.button whileHover={hoverEffect} whileTap={tapEffect} onClick={() => { sfx.playClick(); setGoal(null); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl font-bold text-sm transition-all ${goal === null ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' : 'text-slate-400 hover:text-white surface-float'}`}>Endless</motion.button>
-              <motion.button whileHover={hoverEffect} whileTap={tapEffect} onClick={() => { sfx.playClick(); setGoal(10); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl font-bold text-sm transition-all ${goal === 10 ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' : 'text-slate-400 hover:text-white surface-float'}`}>10 Reps</motion.button>
-              <motion.button whileHover={hoverEffect} whileTap={tapEffect} onClick={() => { sfx.playClick(); setGoal(25); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl font-bold text-sm transition-all ${goal === 25 ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' : 'text-slate-400 hover:text-white surface-float'}`}>25 Reps</motion.button>
-              <motion.button whileHover={hoverEffect} whileTap={tapEffect} onClick={() => { sfx.playClick(); setGoal(50); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl font-bold text-sm transition-all ${goal === 50 ? 'bg-blue-600 text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)]' : 'text-slate-400 hover:text-white surface-float'}`}>50 Reps</motion.button>
-            </div>
+            <SegmentedControl
+              value={goal}
+              onChange={(v) => { sfx.playClick(); setGoal(v); }}
+              accentColor="from-blue-600 to-purple-600"
+              options={[
+                { value: null,  label: '∞',      sublabel: 'Endless' },
+                { value: 10,    label: '10',      sublabel: 'Reps' },
+                { value: 25,    label: '25',      sublabel: 'Reps' },
+                { value: 50,    label: '50',      sublabel: 'Reps' },
+              ]}
+            />
+            {/* Live tooltip under the selector */}
+            <p className="mt-4 text-xs text-slate-500 font-semibold">
+              {goal === null
+                ? 'No rep limit — go until you stop.'
+                : `Workout ends automatically after ${goal} reps.`}
+            </p>
           </motion.div>
 
           {/* Start Exercises Grid */}

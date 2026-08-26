@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { ExerciseType } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
 import { loadStats, getRankFromXP, type WorkoutSession } from '../lib/achievements';
-import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff, Dumbbell } from 'lucide-react';
+import { Activity, Flame, Target, Trophy, TrendingUp, History, Zap, Shield, Mic, MicOff } from 'lucide-react';
 import { MuscleHeatmap } from './MuscleHeatmap';
 import { Skeleton } from './Skeleton';
 import { motion } from 'framer-motion';
@@ -331,24 +331,20 @@ export function ExerciseSelector({
             </motion.div>
           </motion.div>
           
-          {/* Heatmap */}
-          <motion.div variants={cardEntrance} className="surface-raised p-8 mt-4">
-            <div className="flex items-center justify-between mb-6">
+          {/* Heatmap — 3D viewer, always rendered */}
+          <motion.div variants={cardEntrance} className="surface-raised p-6 mt-4">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-section flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-400" /> Muscle Heatmap
+                <Target className="w-5 h-5 text-blue-400" /> 3D Muscle Heatmap
               </h3>
+              {recentWorkouts.length === 0 && (
+                <span className="text-xs text-slate-500 font-bold">Complete a workout to activate</span>
+              )}
             </div>
             {isLoadingStats ? (
-              <Skeleton className="w-full h-64" />
-            ) : recentWorkouts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 opacity-70">
-                <div className="icon-container-premium w-16 h-16 flex items-center justify-center mb-4">
-                  <Dumbbell className="w-8 h-8 text-slate-500" />
-                </div>
-                <p className="text-body text-center max-w-[240px]">Complete a workout to reveal your muscular engagement heatmap.</p>
-              </div>
+              <Skeleton className="w-full h-[380px]" />
             ) : (
-              <div className="surface-float p-6 rounded-2xl border border-white/5">
+              <div className="rounded-2xl overflow-hidden border border-white/5 bg-slate-950/50">
                 <MuscleHeatmap history={recentWorkouts} />
               </div>
             )}

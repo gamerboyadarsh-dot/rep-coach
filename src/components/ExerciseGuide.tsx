@@ -161,7 +161,7 @@ export function ExerciseGuide() {
                       <span className="mt-4 text-xs font-bold text-slate-400 tracking-wider">LOADING 3D HEATMAP</span>
                     </div>
                   }>
-                    <Heatmap3D />
+                    <Heatmap3D history={[]} />
                   </Suspense>
                 </div>
               </div>

@@ -332,3 +332,33 @@ input[type='range'].neon-slider::-moz-range-thumb {
     animation: none !important;
   }
 }
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+/* Phase 10: Cursor-Reactive Lighting (Desktop Only) */
+@media (hover: hover) and (pointer: fine) {
+  .surface-float::before, .surface-raised::before, .icon-container-premium::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+      rgba(255, 255, 255, 0.08),
+      transparent 40%
+    );
+    background-attachment: fixed;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .surface-float:hover::before, .surface-raised:hover::before, .icon-container-premium:hover::before {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-float::before, .surface-raised::before, .icon-container-premium::before {
+    display: none !important;
+  }
+}

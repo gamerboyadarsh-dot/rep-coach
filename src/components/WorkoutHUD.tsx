@@ -1,3 +1,4 @@
+import { AudioVisualizer } from './AudioVisualizer';
 import { useEffect, useState } from 'react';
 import type { ExerciseType, RepState, PushupState } from '../lib/exerciseRules';
 import { FormFeedback } from './FormFeedback';
@@ -101,8 +102,8 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
     setPrevErrorKey(key);
   }, [errors, prevErrorKey, voiceOn]);
 
-  const scoreColor = formScore >= 80 ? 'text-blue-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
-  const confidenceColor = poseConfidence >= 70 ? 'text-blue-400' : poseConfidence >= 40 ? 'text-orange-400' : 'text-red-400';
+  const scoreColor = formScore >= 80 ? 'text-lime-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
+  const confidenceColor = poseConfidence >= 70 ? 'text-lime-400' : poseConfidence >= 40 ? 'text-orange-400' : 'text-red-400';
   
   // HUD Gamification: Neon Breathing Glow based on Form
   const scoreGlowStyle = formScore >= 80 ? { boxShadow: '0 0 50px rgba(59,130,246,0.6)', borderColor: 'rgba(59,130,246,0.5)' }
@@ -126,6 +127,7 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-50 pointer-events-none transition-all duration-300">
+      <AudioVisualizer />
       {/* Top Bar */}
       <motion.div variants={staggerContainer} className="absolute top-0 left-0 right-0 p-4 md:p-6 flex flex-col md:flex-row gap-4 justify-between items-start">
         <div className="flex gap-3 flex-wrap">
@@ -139,13 +141,13 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
 
           <motion.div variants={cardEntrance} className="flex items-center gap-3 surface-float rounded-full px-5 py-2 pointer-events-auto border border-white/5 hover:border-white/20 shadow-lg">
             {hasGoodForm ? (
-              <CheckCircle2 className="w-5 h-5 text-blue-400" />
+              <CheckCircle2 className="w-5 h-5 text-lime-400" />
             ) : (
               <XOctagon className="w-5 h-5 text-red-400 animate-pulse" />
             )}
             <div className="flex flex-col">
               <div className="text-meta mb-0.5">Form</div>
-              <div className={`text-sm font-bold tracking-wide ${hasGoodForm ? 'text-blue-400' : 'text-red-400'}`}>
+              <div className={`text-sm font-bold tracking-wide ${hasGoodForm ? 'text-lime-400' : 'text-red-400'}`}>
                 {hasGoodForm ? 'Optimal' : 'Check Form'}
               </div>
             </div>
@@ -173,7 +175,7 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
             <button
               onClick={() => { sfx.playClick(); onToggleVoiceControl(); }}
               className={`backdrop-blur-md border rounded-full px-4 py-2 transition-all pointer-events-auto shadow-lg self-end md:self-auto active:scale-95 flex items-center justify-center ${
-                voiceControlEnabled ? 'surface-float border-blue-500/50 text-blue-400' : 'surface-raised border-white/5 text-slate-400 hover:text-white hover:border-white/20'
+                voiceControlEnabled ? 'surface-float border-lime-500/50 text-lime-400' : 'surface-raised border-white/5 text-slate-400 hover:text-white hover:border-white/20'
               }`}
             >
               {voiceControlEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 opacity-50" />}
@@ -215,7 +217,7 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
       {rhythmModeEnabled && rhythmRating && (
         <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-bounce font-black text-6xl italic drop-shadow-[0_0_25px_rgba(168,85,247,1)] pointer-events-none z-50 ${
           rhythmRating === 'PERFECT' ? 'text-purple-400' :
-          rhythmRating === 'GOOD' ? 'text-blue-400' : 'text-red-500'
+          rhythmRating === 'GOOD' ? 'text-lime-400' : 'text-red-500'
         }`}>
           {rhythmRating}!
         </div>
@@ -245,10 +247,10 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           style={scoreGlowStyle}
         >
           {/* Subtle Glow */}
-          <div className="absolute top-0 left-0 w-full h-full bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-lime-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
           <div className="flex items-center justify-center gap-2 mb-4 w-full">
-            <Target className="w-4 h-4 text-blue-500" />
+            <Target className="w-4 h-4 text-lime-500" />
             <span className="text-meta">
               {exercise === 'plank' ? 'Hold Time (s)' : 'Rep Count'}
             </span>
@@ -272,7 +274,7 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           {goal && (
             <div className="w-full mt-8 flex flex-col gap-3 relative z-10">
               <div className="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden relative border border-white/5 shadow-inner">
-                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-500 ease-[0.22,1,0.36,1] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]" style={{ width: `${progress}%` }}></div>
+                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-lime-500 to-lime-400 transition-all duration-500 ease-[0.22,1,0.36,1] rounded-full shadow-[0_0_15px_rgba(132,204,22,0.6)]" style={{ width: `${progress}%` }}></div>
               </div>
               {ghostData && (
                 <div className="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden relative flex items-center border border-white/5 shadow-inner mt-1">
@@ -311,11 +313,11 @@ export function WorkoutHUD({ exercise, repCount, state, errors, formScore, poseC
           <div className="w-full">
             <div className="flex justify-between items-center mb-3">
               <span className="text-meta">Stage</span>
-              <span className="text-sm font-bold text-blue-400 tracking-wide uppercase">{state}</span>
+              <span className="text-sm font-bold text-lime-400 tracking-wide uppercase">{state}</span>
             </div>
             <div className="w-full bg-slate-900/80 rounded-full h-2 overflow-hidden border border-white/5 shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-300 ease-[0.22,1,0.36,1] rounded-full"
+                className="h-full bg-gradient-to-r from-lime-500 to-lime-400 transition-all duration-300 ease-[0.22,1,0.36,1] rounded-full"
                 style={{ width: stateProgress }}
               ></div>
             </div>

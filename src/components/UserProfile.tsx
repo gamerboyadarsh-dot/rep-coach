@@ -147,7 +147,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
     : null;
 
   const getBmiCategory = (b: number) => {
-    if (b < 18.5) return { label: 'Underweight', color: 'text-blue-400', dot: 'bg-blue-400', glowStyle: { boxShadow: '0 0 25px rgba(59,130,246,1)' } };
+    if (b < 18.5) return { label: 'Underweight', color: 'text-lime-400', dot: 'bg-lime-400', glowStyle: { boxShadow: '0 0 25px rgba(163,230,53,1)' } };
     if (b < 25) return { label: 'Healthy Weight', color: 'text-green-400', dot: 'bg-green-400', glowStyle: { boxShadow: '0 0 25px rgba(34,197,94,1)' } };
     if (b < 30) return { label: 'Overweight', color: 'text-yellow-400', dot: 'bg-yellow-400', glowStyle: { boxShadow: '0 0 25px rgba(234,179,8,1)' } };
     return { label: 'Obese', color: 'text-red-500', dot: 'bg-red-500', glowStyle: { boxShadow: '0 0 25px rgba(239,68,68,1)' } };
@@ -223,7 +223,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
         
         {/* Profile Header */}
         <div className="surface-raised p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-lime-500/10 rounded-full blur-[100px] pointer-events-none"></div>
           
           <div className="relative group cursor-pointer z-10" onClick={() => fileInputRef.current?.click()}>
             <input 
@@ -267,7 +267,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
         <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center flex flex-col items-center justify-center">
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
-              <Activity className="w-4 h-4 text-blue-400" /> Career Reps
+              <Activity className="w-4 h-4 text-lime-400" /> Career Reps
             </div>
             <div className="text-display text-hero-gradient"><CountUpNumber value={safeStats.totalReps} /></div>
           </motion.div>
@@ -295,7 +295,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
           {/* History */}
           <div className="surface-raised p-8 md:p-10 flex flex-col">
             <h2 className="text-section mb-8 flex items-center gap-3">
-              <History className="w-6 h-6 text-blue-500" /> Workout History
+              <History className="w-6 h-6 text-lime-500" /> Workout History
             </h2>
             <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {isPending ? (
@@ -318,7 +318,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                     </div>
                     <div className="text-right flex flex-col items-end">
                       <div className="text-xl font-bold text-white leading-none mb-1">{session.reps} <span className="text-xs text-slate-500 font-normal">reps</span></div>
-                      <div className={`text-xs font-bold ${session.formScore >= 80 ? 'text-blue-400' : 'text-orange-400'}`}>{session.formScore}% form</div>
+                      <div className={`text-xs font-bold ${session.formScore >= 80 ? 'text-lime-400' : 'text-orange-400'}`}>{session.formScore}% form</div>
                     </div>
                   </div>
                 ))
@@ -410,7 +410,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
               {/* Camera Picker */}
               <div className="surface-float p-6 border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Video className="w-5 h-5 text-blue-400 shrink-0" />
+                  <Video className="w-5 h-5 text-lime-400 shrink-0" />
                   <div className="truncate">
                     <h4 className="text-white font-bold truncate">Default Camera</h4>
                     <p className="text-xs text-slate-400 truncate">Select which camera to use</p>

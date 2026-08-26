@@ -10,6 +10,7 @@ import { exerciseLogic } from './lib/exerciseRules';
 import { sfx } from './lib/sounds';
 import { loadGhostChallenge, type GhostData } from './lib/ghostChallenges';
 import type { ExerciseType, RepState, PushupState } from './lib/exerciseRules';
+import { CustomCursor } from './components/CustomCursor';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './App.css';
 
@@ -277,8 +278,33 @@ function App() {
     }
   }, [appState, exercise]);
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    
+    // Global mouse tracking for CSS reactive lighting (Phase 10)
+    const handleMouseMove = (e: MouseEvent) => {
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+        document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
+      <CustomCursor />
       <Suspense fallback={<FullScreenLoader />}>
         <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-blue-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
           
@@ -287,7 +313,7 @@ function App() {
 
           {/* Navigation Bar */}
           {appState !== 'auth' && appState !== 'workout' && (
-            <nav className="fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none">
+            <nav className={`fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500 ${scrolled ? 'backdrop-blur-xl bg-slate-900/40 shadow-lg shadow-black/20 border-b border-white/5' : 'backdrop-blur-none bg-transparent'}`}>
               <div className="flex items-center gap-2 pointer-events-auto cursor-pointer" onClick={() => setAppState('selecting')}>
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <img src="/repcoach-icon.svg" className="w-6 h-6 text-white" alt="RepCoach" />

@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import { Trophy, Activity, Medal, ArrowRight, CheckCircle2, XOctagon, Timer, Flame, Share2 } from 'lucide-react';
 import { saveGhostChallenge } from '../lib/ghostChallenges';
 import { ScrambleNumber } from './ScrambleNumber';
+import { PRCelebration } from './PRCelebration';
+import { CountUpNumber } from './CountUpNumber';
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60);
@@ -127,7 +129,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     }
   }, [totalReps, formScore, userId, isGuest, exercise, durationSeconds]);
 
-  const scoreColor = formScore >= 80 ? 'text-blue-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
+  const scoreColor = formScore >= 80 ? 'text-lime-400' : formScore >= 50 ? 'text-orange-400' : 'text-red-400';
 
   let aiMessage = "";
   let specificTip = "";
@@ -242,9 +244,10 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     <div className="flex flex-col items-center min-h-screen pt-24 pb-12 px-6 relative z-10 overflow-y-auto w-full">
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 md:p-12 w-full max-w-4xl shadow-2xl">
         
+        <PRCelebration isNewPR={isNewPR} value={totalReps.toString()} />
         <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-            <Medal className="w-10 h-10 text-blue-500" />
+          <div className="w-20 h-20 bg-lime-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(132,204,22,0.2)]">
+            <Medal className="w-10 h-10 text-lime-500" />
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Workout Complete, {username}</h1>
           <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
@@ -292,9 +295,9 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" /> {exercise === 'plank' ? 'Hold (s)' : 'Reps'}
+              <Activity className="w-4 h-4 text-lime-400" /> {exercise === 'plank' ? 'Hold (s)' : 'Reps'}
             </div>
-            <div className="text-4xl font-black text-white"><ScrambleNumber value={totalReps} /></div>
+            <div className="text-4xl font-black text-white"><CountUpNumber value={totalReps} isKinetic className="text-7xl md:text-9xl font-black font-outfit" /></div>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
@@ -326,8 +329,8 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold mb-2">AI Coach Analysis</h3>
           <p className="text-white font-medium italic">"{aiMessage}"</p>
           {specificTip && (
-            <div className="mt-4 bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg text-blue-300 text-sm font-semibold">
-              <span className="font-bold text-blue-400">Pro Tip: </span> {specificTip}
+            <div className="mt-4 bg-lime-500/10 border border-lime-500/30 p-3 rounded-lg text-lime-300 text-sm font-semibold">
+              <span className="font-bold text-lime-400">Pro Tip: </span> {specificTip}
             </div>
           )}
         </div>
@@ -352,7 +355,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
                       </td>
                       <td className="py-4 px-6">
                         {rep.goodForm ? (
-                          <span className="text-blue-400 text-sm font-semibold flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Optimal</span>
+                          <span className="text-lime-400 text-sm font-semibold flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Optimal</span>
                         ) : (
                           <span className="text-red-400 text-sm font-semibold flex items-center gap-1"><XOctagon className="w-4 h-4"/> Suboptimal</span>
                         )}
@@ -372,7 +375,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           <button 
             onClick={handleShare}
             disabled={isSharing}
-            className="w-full sm:w-auto bg-blue-600/20 hover:bg-blue-600 border border-blue-500/50 hover:border-blue-500 text-blue-400 hover:text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.15)] group"
+            className="w-full sm:w-auto bg-blue-600/20 hover:bg-blue-600 border border-lime-500/50 hover:border-blue-500 text-lime-400 hover:text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_30px_rgba(132,204,22,0.15)] group"
           >
             {isSharing ? (
               <span className="flex items-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Generating Challenge...</span>
@@ -384,7 +387,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
           </button>
           <button
             onClick={() => { sfx.playClick(); onRestart(); }}
-            className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white rounded-2xl py-4 font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
+            className="flex-[2] bg-lime-500 hover:bg-lime-400 text-slate-900 rounded-2xl py-4 font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(132,204,22,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
           >
             Finish Workout <ArrowRight className="w-5 h-5" />
           </button>

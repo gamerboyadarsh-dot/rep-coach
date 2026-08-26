@@ -24,6 +24,7 @@ class SoundSystem {
     gain.connect(this.ctx.destination);
     
     osc.start();
+    window.dispatchEvent(new CustomEvent('audio-pulse', { detail: { type, duration, vol } }));
     osc.stop(this.ctx.currentTime + duration);
   }
 

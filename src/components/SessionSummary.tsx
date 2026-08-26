@@ -58,6 +58,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
   const [isNewPR, setIsNewPR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   
   const personality = localStorage.getItem('repCoach_personality') || 'supportive';
   
@@ -109,8 +110,17 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
               navigator.vibrate([200, 100, 200]);
             }
           }
-        } catch (err) {
+        } catch (err: unknown) {
+          const e = err as { code?: string; message?: string };
           console.error('Failed to process workout stats:', err);
+          // Show a user-facing error if it's a permission/auth error
+          if (e?.code === 'permission-denied') {
+            setSaveError('Firestore permission denied. Check your Firestore security rules in the Firebase Console — make sure authenticated users can write to /users/{uid}.');
+          } else if (e?.code) {
+            setSaveError(`Workout saved locally but cloud sync failed (${e.code}). Your data is still safe on this device.`);
+          } else {
+            setSaveError('Workout saved locally but cloud sync failed. Your data is still safe on this device.');
+          }
         }
       }
       handleWorkout();
@@ -202,7 +212,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
     sfx.playClick();
     setIsSharing(true);
 
-    let challengeUrl = 'https://repcoach-hackathon-live.surge.sh';
+    let challengeUrl = 'https://rep-coach-two.vercel.app';
 
     if (repTimestamps && repTimestamps.length > 0) {
       const ghostId = await saveGhostChallenge({
@@ -212,7 +222,7 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
         timestamps: repTimestamps
       });
       if (ghostId) {
-        challengeUrl = `https://repcoach-hackathon-live.surge.sh?challenge=${ghostId}`;
+        challengeUrl = `https://rep-coach-two.vercel.app?challenge=${ghostId}`;
       }
     }
 
@@ -241,6 +251,17 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
             "{aiMessage}"
           </p>
         </div>
+
+        {/* Save error banner */}
+        {saveError && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-start gap-3">
+            <span className="text-red-400 text-lg mt-0.5">⚠️</span>
+            <div>
+              <div className="text-red-400 font-bold text-sm mb-1">Cloud sync failed</div>
+              <div className="text-red-300/80 text-xs leading-relaxed">{saveError}</div>
+            </div>
+          </div>
+        )}
 
         {/* Newly Unlocked Achievements */}
         {unlockedBadges.length > 0 && (

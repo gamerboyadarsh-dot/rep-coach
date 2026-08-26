@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { usePoseDetection } from './hooks/usePoseDetection';
@@ -327,112 +328,118 @@ function App() {
             </nav>
           )}
 
-          {appState === 'auth' && (
-            <AuthScreen 
-              onLogin={(uid, uname, photo, guest) => {
-                sfx.playClick();
-                setIsGuest(!!guest);
-                setUserId(uid);
-                setUsername(uname);
-                setUserPhoto(photo || null);
-                setAppState('selecting');
-              }} 
-            />
-          )}
-
-          {appState === 'guide' && (
-            <ExerciseGuide />
-          )}
-
-          {appState === 'profile' && userId && username && (
-            <UserProfile 
-              userId={userId}
-              isGuest={isGuest}
-              username={username}
-              photoURL={userPhoto}
-              onLogout={() => {
-                if (!isGuest) auth?.signOut();
-                else {
-                  setUserId(null);
-                  setUsername(null);
-                  setAppState('auth');
-                }
-              }}
-              onPhotoUpdate={(newPhoto) => setUserPhoto(newPhoto)}
-            />
-          )}
-
-          {appState === 'selecting' && userId && username && (
-            <ExerciseSelector 
-              userId={userId}
-              isGuest={isGuest}
-              username={username || 'Guest'}
-              isListening={isListening}
-              voiceControlEnabled={voiceControlEnabled}
-              onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
-              rhythmModeEnabled={rhythmModeEnabled}
-              onToggleRhythmMode={() => setRhythmModeEnabled(v => !v)}
-              onSelect={(ex, selectedGoal) => {
-                setExercise(ex);
-                setGoal(selectedGoal);
-                handleStartWorkout(ex, selectedGoal);
-              }}
-              onPhotoUpdate={(p) => setUserPhoto(p)}
-            />
-          )}
-
-          {appState === 'workout' && (
-            <div className="fixed inset-0 bg-black z-50">
-              <CameraView 
-                videoRef={videoRef}
-                canvasRef={canvasRef}
-                isLoaded={isLoaded}
-                error={cameraError}
-                isFrontFacing={isFrontFacing}
-                cameraCount={cameraCount}
-                onToggleCamera={toggleCamera}
+          <AnimatePresence mode="wait">
+            {appState === 'auth' && (
+              <AuthScreen 
+                key="auth"
+                onLogin={(uid, uname, photo, guest) => {
+                  sfx.playClick();
+                  setIsGuest(!!guest);
+                  setUserId(uid);
+                  setUsername(uname);
+                  setUserPhoto(photo || null);
+                  setAppState('selecting');
+                }} 
               />
-              
-              {isLoaded && (
-                <>
-                  <ARAvatar landmarks={landmarks} />
+            )}
 
-                  <WorkoutHUD
-                    exercise={exercise}
-                    repCount={repCount}
-                    state={exerciseState}
-                    errors={errors}
-                    formScore={formScore}
-                    poseConfidence={poseConfidence}
-                    streak={exerciseLogic.getCurrentStreak()}
-                    goal={goal}
-                    power={power}
-                    ghostData={ghostData}
-                    startTime={startTime}
-                    voiceControlEnabled={voiceControlEnabled}
-                    onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
-                    rhythmModeEnabled={rhythmModeEnabled}
-                    rhythmRating={rhythmRating}
-                    onEndSession={handleEndSession}
-                  />
-                </>
-              )}
-            </div>
-          )}
+            {appState === 'guide' && (
+              <ExerciseGuide key="guide" />
+            )}
 
-          {appState === 'summary' && userId && username && (
-            <SessionSummary
-              userId={userId}
-              isGuest={isGuest}
-              username={username}
-              results={exerciseLogic.getResults()}
-              exercise={exercise}
-              durationSeconds={workoutDuration}
-              bestRepFrames={bestRepFrames}
-              repTimestamps={repTimestampsRef.current}
-              onRestart={() => setAppState('selecting')}
-            />
-          )}
+            {appState === 'profile' && userId && username && (
+              <UserProfile 
+                key="profile"
+                userId={userId}
+                isGuest={isGuest}
+                username={username}
+                photoURL={userPhoto}
+                onLogout={() => {
+                  if (!isGuest) auth?.signOut();
+                  else {
+                    setUserId(null);
+                    setUsername(null);
+                    setAppState('auth');
+                  }
+                }}
+                onPhotoUpdate={(newPhoto) => setUserPhoto(newPhoto)}
+              />
+            )}
+
+            {appState === 'selecting' && userId && username && (
+              <ExerciseSelector 
+                key="selecting"
+                userId={userId}
+                isGuest={isGuest}
+                username={username || 'Guest'}
+                isListening={isListening}
+                voiceControlEnabled={voiceControlEnabled}
+                onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
+                rhythmModeEnabled={rhythmModeEnabled}
+                onToggleRhythmMode={() => setRhythmModeEnabled(v => !v)}
+                onSelect={(ex, selectedGoal) => {
+                  setExercise(ex);
+                  setGoal(selectedGoal);
+                  handleStartWorkout(ex, selectedGoal);
+                }}
+                onPhotoUpdate={(p) => setUserPhoto(p)}
+              />
+            )}
+
+            {appState === 'workout' && (
+              <div key="workout" className="fixed inset-0 bg-black z-50">
+                <CameraView 
+                  videoRef={videoRef}
+                  canvasRef={canvasRef}
+                  isLoaded={isLoaded}
+                  error={cameraError}
+                  isFrontFacing={isFrontFacing}
+                  cameraCount={cameraCount}
+                  onToggleCamera={toggleCamera}
+                />
+                
+                {isLoaded && (
+                  <>
+                    <ARAvatar landmarks={landmarks} />
+
+                    <WorkoutHUD
+                      exercise={exercise}
+                      repCount={repCount}
+                      state={exerciseState}
+                      errors={errors}
+                      formScore={formScore}
+                      poseConfidence={poseConfidence}
+                      streak={exerciseLogic.getCurrentStreak()}
+                      goal={goal}
+                      power={power}
+                      ghostData={ghostData}
+                      startTime={startTime}
+                      voiceControlEnabled={voiceControlEnabled}
+                      onToggleVoiceControl={() => setVoiceControlEnabled(v => !v)}
+                      rhythmModeEnabled={rhythmModeEnabled}
+                      rhythmRating={rhythmRating}
+                      onEndSession={handleEndSession}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+
+            {appState === 'summary' && userId && username && (
+              <SessionSummary
+                key="summary"
+                userId={userId}
+                isGuest={isGuest}
+                username={username}
+                results={exerciseLogic.getResults()}
+                exercise={exercise}
+                durationSeconds={workoutDuration}
+                bestRepFrames={bestRepFrames}
+                repTimestamps={repTimestampsRef.current}
+                onRestart={() => setAppState('selecting')}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Footer */}
           {appState !== 'workout' && (

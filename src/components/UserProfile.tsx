@@ -4,7 +4,7 @@ import { loadStats, saveStats, getRankFromXP, type UserStats } from '../lib/achi
 import { motion } from 'framer-motion';
 import { pageTransition, staggerContainer, cardEntrance, hoverEffect } from '../lib/animations';
 import { Trophy, Activity, Flame, LogOut, Settings, Video, Moon, Bell, History, Camera, Mic } from 'lucide-react';
-import { ScrambleNumber } from './ScrambleNumber';
+import { CountUpNumber } from './CountUpNumber';
 import { Skeleton } from './Skeleton';
 
 interface Props {
@@ -269,14 +269,14 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Activity className="w-4 h-4 text-blue-400" /> Career Reps
             </div>
-            <div className="text-display text-hero-gradient"><ScrambleNumber value={safeStats.totalReps} /></div>
+            <div className="text-display text-hero-gradient"><CountUpNumber value={safeStats.totalReps} /></div>
           </motion.div>
           
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center flex flex-col items-center justify-center">
             <div className="text-meta mb-3 flex items-center justify-center gap-2 text-slate-400">
               <Trophy className="w-4 h-4 text-purple-400" /> Best Streak
             </div>
-            <div className="text-display text-white"><ScrambleNumber value={safeStats.highestStreak} /></div>
+            <div className="text-display text-white"><CountUpNumber value={safeStats.highestStreak} /></div>
           </motion.div>
 
           <motion.div variants={cardEntrance} whileHover={hoverEffect} className="surface-raised p-8 text-center relative overflow-hidden flex flex-col items-center justify-center">
@@ -284,7 +284,7 @@ export function UserProfile({ userId, isGuest, username, photoURL, onLogout, onP
                Daily Streak
             </div>
             <div className="text-display text-orange-400 flex items-center justify-center gap-3">
-              <ScrambleNumber value={safeStats.currentDailyStreak} /> <Flame className="w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
+              <CountUpNumber value={safeStats.currentDailyStreak} /> <Flame className={`w-10 h-10 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)] ${safeStats.currentDailyStreak > 0 ? 'animate-flame-flicker' : ''}`} />
             </div>
           </motion.div>
         </motion.div>

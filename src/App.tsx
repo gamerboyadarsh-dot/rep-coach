@@ -29,6 +29,8 @@ const FullScreenLoader = () => (
   </div>
 );
 
+import { AnimatedBackground } from './components/AnimatedBackground';
+
 type AppState = 'auth' | 'selecting' | 'workout' | 'summary' | 'profile' | 'guide';
 
 function App() {
@@ -279,13 +281,9 @@ function App() {
       <Suspense fallback={<FullScreenLoader />}>
         <div className="flex flex-col min-h-screen bg-transparent text-white font-sans selection:bg-blue-500/30 overflow-x-hidden relative z-0" style={auroraVars}>
           
-          {/* Global Aurora Background */}
-          <div className="aurora-bg">
-            <div className="aurora-orb aurora-orb-1" />
-            <div className="aurora-orb aurora-orb-2" />
-            <div className="aurora-orb aurora-orb-3" />
-            <div className="noise-overlay" />
-          </div>
+          <AnimatedBackground paused={appState === 'workout'} />
+          <div className="noise-overlay" />
+
           {/* Navigation Bar */}
           {appState !== 'auth' && appState !== 'workout' && (
             <nav className="fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none">

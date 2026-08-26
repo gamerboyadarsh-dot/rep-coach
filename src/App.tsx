@@ -265,9 +265,9 @@ function App() {
     switch (exercise) {
       case 'squat': // Purple/Blue
         return { '--aurora-c1': '168, 85, 247', '--aurora-c2': '59, 130, 246', '--aurora-c3': '139, 92, 246' } as React.CSSProperties;
-      case 'pushups': // Intense Red/Orange
+      case 'pushup': // Intense Red/Orange
         return { '--aurora-c1': '239, 68, 68', '--aurora-c2': '249, 115, 22', '--aurora-c3': '220, 38, 38' } as React.CSSProperties;
-      case 'jumping_jacks': // Cyan/Green
+      case 'jumping_jack': // Cyan/Green
         return { '--aurora-c1': '14, 165, 233', '--aurora-c2': '34, 197, 94', '--aurora-c3': '6, 182, 212' } as React.CSSProperties;
       default:
         return {} as React.CSSProperties;
@@ -291,9 +291,7 @@ function App() {
             <nav className="fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-50 pointer-events-none">
               <div className="flex items-center gap-2 pointer-events-auto cursor-pointer" onClick={() => setAppState('selecting')}>
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <img src="/repcoach-icon.svg" className="w-6 h-6 text-white" alt="RepCoach" />
                 </div>
                 <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 hidden sm:block">
                   Rep Coach

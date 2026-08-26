@@ -100,10 +100,7 @@ export function AuthScreen({ onLogin, isLoading }: Props) {
 
         <div className="relative z-10 text-center mb-12">
           <div className="icon-container-active w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-blue-500/10 border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m11 17 2 2a1 1 0 1 0 3-3"/>
-              <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-4.24 4.24a3 3 0 1 0 4.24 4.24l2.36-2.36"/>
-            </svg>
+            <img src="/repcoach-icon.svg" className="w-10 h-10 text-white" alt="Rep Coach" />
           </div>
           <h1 className="text-display text-white tracking-tight mb-2">Rep Coach</h1>
           <p className="text-meta text-blue-400">YOUR AI PERSONAL TRAINER</p>

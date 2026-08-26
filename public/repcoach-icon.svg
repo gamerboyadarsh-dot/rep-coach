@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Running figure icon - white on transparent -->
+  <!-- Body/torso -->
+  <circle cx="120" cy="52" r="14" fill="white"/>
+  <!-- Body lean -->
+  <path d="M120 66 L108 100 L95 130" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Arms sweep -->
+  <path d="M114 78 L88 68 L78 52" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M116 82 L140 78 L155 90" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Legs stride -->
+  <path d="M108 100 L90 126 L78 148" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M108 100 L118 128 L130 150" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Dynamic motion swoosh -->
+  <path d="M60 105 Q90 88 130 95 Q160 100 175 118" stroke="white" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M50 120 Q85 108 125 112 Q158 116 172 130" stroke="white" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.35"/>
+</svg>

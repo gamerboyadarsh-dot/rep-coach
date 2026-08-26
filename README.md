@@ -4,9 +4,9 @@
 
 Rep Coach is a real-time exercise form coach powered by computer vision. Point your webcam at yourself, pick an exercise, and get live rep counting, biomechanical form grading, and instant feedback — no wearables, no app install, no server doing the heavy lifting.
 
-Built in 24 hours for the Vibe Coding Hackathon.
+> 🚀 **Live Demo:** [rep-coach-two.vercel.app](https://rep-coach-two.vercel.app)
 
-**Live Demo:** [repcoach-hackathon-live.surge.sh](https://repcoach-hackathon-live.surge.sh)
+Built in 24 hours for the Vibe Coding Hackathon.
 
 ---
 
@@ -85,7 +85,7 @@ Configured as an installable Progressive Web App with offline-capable caching.
 - **Icons:** `lucide-react`
 - **Audio:** Native Web Audio API (synthesized sound effects) and Web Speech API (voice coaching)
 - **PWA:** `vite-plugin-pwa`
-- **Hosting:** Surge
+- **Hosting:** Vercel (auto-deployed from GitHub, replaces Surge)
 
 ---
 

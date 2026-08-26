@@ -315,3 +315,20 @@ input[type='range'].neon-slider::-moz-range-thumb {
   box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
   cursor: pointer;
 }
+
+/* -- Reduced Motion: disable all decorative animations ------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-flame-flicker,
+  .pulse-glow,
+  .noise-overlay {
+    animation: none !important;
+  }
+}

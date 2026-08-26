@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { RepResult } from '../lib/exerciseRules';
 import { sfx } from '../lib/sounds';
 import confetti from 'canvas-confetti';
@@ -68,7 +68,11 @@ export function SessionSummary({ userId, isGuest, username, results, exercise, d
   const goodReps = results.filter(r => r.goodForm).length;
   const formScore = totalReps === 0 ? 0 : Math.round((goodReps / totalReps) * 100);
 
+  const hasProcessed = useRef(false);
+
   useEffect(() => {
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
     sfx.playCombo();
     
     if (totalReps > 0) {

@@ -169,7 +169,7 @@ function AnatomicalFigure({ engagement, onMuscleClick, isInteracting }: { engage
 
   return (
     <group ref={groupRef} position={[0, 0.1, 0]}>
-      <primitive object={scene} rotation={rotation} />
+      <primitive object={scene} rotation={rotation} scale={0.00335} />
       {muscles.map((r, i) => (
         <mesh
           key={i}

@@ -55,6 +55,7 @@ function App() {
 
   useEffect(() => {
     if (!auth) {
+      setAuthResolved(true);
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {

@@ -70,6 +70,7 @@ function App() {
         setUserPhoto(null);
         setIsGuest(false);
         setAppState('auth');
+        setAuthResolved(true);
       }
     });
     return () => unsubscribe();
